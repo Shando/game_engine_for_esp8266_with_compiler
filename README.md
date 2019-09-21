@@ -2,7 +2,7 @@
 
 Firmware for gaming console on esp8266 [https://github.com/corax89/esp8266_game_engine](https://github.com/corax89/esp8266_game_engine)
 
-*** EDIT 22/09/19 - Updated to allow programming for ESP32 - by Shando ***
+*** EDIT 22/09/19 - Updated to allow programming for ESP32 with screen size of 320 x 240 (changeable in cpu.js - lines 15 & 16)- by Shando ***
 
 ![columns](/img/columns.gif) ![snake](/img/snake.gif) ![race](/img/race.gif) ![gameoflife](/img/gameoflife.gif) ![mars_attack](/img/mars_attack.gif) ![tile](/img/tile.gif)
  ![clicker](/img/clicker.gif) ![flappybird](/img/flappybird.gif) ![towerdefence](/img/towerdef.gif) ![cityrunner](/img/cityrunner.gif)
