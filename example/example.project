@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeLite_Project Name="example" Version="10.0.0" InternalType="">
+  <VirtualDirectory Name="example">
+    <File Name="wormblast.c"/>
+    <File Name="towerdefence.c"/>
+    <File Name="tile.c"/>
+    <File Name="testinterrupt1.c"/>
+    <File Name="testcollision.c"/>
+    <File Name="tech_demo.c"/>
+    <File Name="tang.c"/>
+    <File Name="sprites.c"/>
+    <File Name="space.c"/>
+    <File Name="sound_test.c"/>
+    <File Name="snake.c"/>
+    <File Name="raycast2.c"/>
+    <File Name="raycast.c"/>
+    <File Name="race.c"/>
+    <File Name="platformer.c"/>
+    <File Name="ninjaescape.c"/>
+    <File Name="mines.c"/>
+    <File Name="memories.c"/>
+    <File Name="maze.c"/>
+    <File Name="mathbench.c"/>
+    <File Name="mars_attack.c"/>
+    <File Name="logo.c"/>
+    <File Name="keytest.c"/>
+    <File Name="gameoflife.c"/>
+    <File Name="galaxies.c"/>
+    <File Name="fourinrow.c"/>
+    <File Name="flappybyrd.c"/>
+    <File Name="fish_life.c"/>
+    <File Name="fire_demo.c"/>
+    <File Name="example.c"/>
+    <File Name="esprogue.c"/>
+    <File Name="drawinimgtest.c"/>
+    <File Name="drawCircle.c"/>
+    <File Name="dragonfractal.c"/>
+    <File Name="columns.c"/>
+    <File Name="clicker.c"/>
+    <File Name="cityrunner.c"/>
+    <File Name="chip8.c"/>
+    <File Name="cardrpg.c"/>
+    <File Name="calculator.c"/>
+    <File Name="breakout.c"/>
+    <File Name="brainf.c"/>
+    <File Name="bench.c"/>
+    <File Name="badapplex16.c"/>
+    <File Name="attack.c"/>
+    <File Name="asteroids.c"/>
+    <File Name="2048.c"/>
+    <File Name="1916.c"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="ESP8266">
+    <File Name="ESP8266/wormblast.c"/>
+    <File Name="ESP8266/towerdefence.c"/>
+    <File Name="ESP8266/tile.c"/>
+    <File Name="ESP8266/testinterrupt1.c"/>
+    <File Name="ESP8266/testcollision.c"/>
+    <File Name="ESP8266/tech_demo.c"/>
+    <File Name="ESP8266/tang.c"/>
+    <File Name="ESP8266/sprites.c"/>
+    <File Name="ESP8266/space.c"/>
+    <File Name="ESP8266/sound_test.c"/>
+    <File Name="ESP8266/snake.c"/>
+    <File Name="ESP8266/raycast2.c"/>
+    <File Name="ESP8266/raycast.c"/>
+    <File Name="ESP8266/race.c"/>
+    <File Name="ESP8266/platformer.c"/>
+    <File Name="ESP8266/ninjaescape.c"/>
+    <File Name="ESP8266/mines.c"/>
+    <File Name="ESP8266/memories.c"/>
+    <File Name="ESP8266/maze.c"/>
+    <File Name="ESP8266/mathbench.c"/>
+    <File Name="ESP8266/mars_attack.c"/>
+    <File Name="ESP8266/logo.c"/>
+    <File Name="ESP8266/keytest.c"/>
+    <File Name="ESP8266/gameoflife.c"/>
+    <File Name="ESP8266/galaxies.c"/>
+    <File Name="ESP8266/fourinrow.c"/>
+    <File Name="ESP8266/flappybyrd.c"/>
+    <File Name="ESP8266/fish_life.c"/>
+    <File Name="ESP8266/fire_demo.c"/>
+    <File Name="ESP8266/example.c"/>
+    <File Name="ESP8266/esprogue.c"/>
+    <File Name="ESP8266/drawinimgtest.c"/>
+    <File Name="ESP8266/drawCircle.c"/>
+    <File Name="ESP8266/dragonfractal.c"/>
+    <File Name="ESP8266/columns.c"/>
+    <File Name="ESP8266/clicker.c"/>
+    <File Name="ESP8266/cityrunner.c"/>
+    <File Name="ESP8266/chip8.c"/>
+    <File Name="ESP8266/cardrpg.c"/>
+    <File Name="ESP8266/calculator.c"/>
+    <File Name="ESP8266/breakout.c"/>
+    <File Name="ESP8266/brainf.c"/>
+    <File Name="ESP8266/bench.c"/>
+    <File Name="ESP8266/badapplex16.c"/>
+    <File Name="ESP8266/attack.c"/>
+    <File Name="ESP8266/asteroids.c"/>
+    <File Name="ESP8266/2048.c"/>
+    <File Name="ESP8266/1916.c"/>
+  </VirtualDirectory>
+  <Description/>
+  <Dependencies/>
+  <Settings Type="Executable">
+    <GlobalSettings>
+      <Compiler Options="" C_Options="" Assembler="">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="">
+        <LibraryPath Value="."/>
+      </Linker>
+      <ResourceCompiler Options=""/>
+    </GlobalSettings>
+    <Configuration Name="Debug" CompilerType="MinGW ( Code::Blocks )" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+      <Compiler Options="-g -Wall" C_Options="" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
+        <IncludePath Value="."/>
+      </Compiler>
+      <Linker Options="-O0" Required="yes">
+        <LibraryPath Value="."/>
+        <LibraryPath Value="Debug"/>
+      </Linker>
+      <ResourceCompiler Options="" Required="no"/>
+      <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Debug" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="./Debug" PauseExecWhenProcTerminates="no" IsGUIProgram="no" IsEnabled="yes"/>
+      <BuildSystem Name="Default"/>
+      <Environment EnvVarSetName="&lt;Use Workspace Settings&gt;" DbgSetName="&lt;Use Global Settings&gt;">
+        <![CDATA[]]>
+      </Environment>
+      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+        <DebuggerSearchPaths/>
+        <PostConnectCommands/>
+        <StartupCommands/>
+      </Debugger>
+      <PreBuild/>
+      <PostBuild/>
+      <CustomBuild Enabled="no">
+        <RebuildCommand/>
+        <CleanCommand/>
+        <BuildCommand/>
+        <PreprocessFileCommand/>
+        <SingleFileCommand/>
+        <MakefileGenerationCommand/>
+        <ThirdPartyToolName/>
+        <WorkingDirectory/>
+      </CustomBuild>
+      <AdditionalRules>
+        <CustomPostBuild/>
+        <CustomPreBuild/>
+      </AdditionalRules>
+      <Completion EnableCpp11="no" EnableCpp14="no">
+        <ClangCmpFlagsC/>
+        <ClangCmpFlags/>
+        <ClangPP/>
+        <SearchPaths/>
+      </Completion>
+    </Configuration>
+  </Settings>
+</CodeLite_Project>

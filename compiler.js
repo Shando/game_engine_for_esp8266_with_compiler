@@ -1,5 +1,5 @@
 "use strict";
-//разбивка на токены
+//token breakdown
 function tokenize(s) {
 	var tokens = [];
 	var thisToken = 0;
@@ -12,7 +12,7 @@ function tokenize(s) {
 		'S_FLIP_HORIZONTAL', 15,
 		'KEY_UP', 1, 'KEY_LEFT', 4, 'KEY_DOWN', 2, 'KEY_RIGHT', 8, 'KEY_A', 16, 'KEY_B', 32
 	];
-	//упрощенный вариант #define, лишь замена
+	//simplified version of #define, just a replacement
 	function define(s) {
 		lastDefine = [''];
 		while (lastDefine.length != 0) {
@@ -28,19 +28,19 @@ function tokenize(s) {
 	}
 
 	s = define(s);
-	s = s.replace(/#include[^\n]*/g, ''); //удаление инклюдов, дабы не мешали
+	s = s.replace(/#include[^\n]*/g, ''); //removal of inclusions, so as not to interfere
 	l = s.length;
 	tokens[0] = '';
 	for (var i = 0; i < l; i++) {
 		switch (s[i]) {
 		case '"':
-			//обработка строки
+			//line processing
 			if (tokens[thisToken] != '')
 				thisToken++;
 			tokens[thisToken] = s[i++];
 			while (i < l && s[i] != '"') {
 				tokens[thisToken] += s[i++];
-				//замена специальных символов
+				//special character replacement
 				if (s[i] == '\\' && s[i + 1] == '"') {
 					tokens[thisToken] += '\\"';
 					i += 2;
@@ -51,7 +51,7 @@ function tokenize(s) {
 			tokens[thisToken] = '';
 			break;
 		case '\'':
-			//обработка отдельных символов
+			//single character processing
 			if (tokens[thisToken] != '')
 				thisToken++;
 			if (s[i + 2] == '\'') {
@@ -71,7 +71,7 @@ function tokenize(s) {
 		case '*':
 		case '%':
 		case '/':
-			//если комментарии, то убираем, оставляя переводы строк
+			//if comments, then remove, leaving line feeds
 			if (s[i + 1] == '/') {
 				while (s[i + 1] != '\n')
 					i++;
@@ -127,7 +127,7 @@ function tokenize(s) {
 			break;
 		case '\t':
 		case ' ':
-			//убираем лишние пробельные символы
+			//remove extra whitespace characters
 			while (l < i && s[i + 1] == ' ')
 				i++;
 			if (tokens[thisToken] != '') {
@@ -149,26 +149,26 @@ function tokenize(s) {
 }
 
 function compile(t) {
-	var asm = []; //основной ассемблерный код
-	var dataAsm = []; //ассемблерный код, который будет добавлен в конце основного
-	var thisTokenNumber = 0; //номер текущего токена
-	var thisToken; //текущий токен
-	var lastToken; //предыдущий токен
-	var varTable = []; //таблица переменных
-	var localVarTable = []; //таблица локальных переменных
-	var functionTable = []; //таблица, содержащая имена функций и их исходный код на ассемблере
+	var asm = []; //core assembler code
+	var dataAsm = []; //assembler code to be added at the end of the main
+	var thisTokenNumber = 0; //current token number
+	var thisToken; //current token
+	var lastToken; //previous token
+	var varTable = []; //variable table
+	var localVarTable = []; //table of local variables
+	var functionTable = []; //table containing the names of the functions and their source code in assembler
 	var thisFunction;
-	var isIntoFunction = false; //находимся ли мы в теле функции
-	var functionVarTable = []; //таблица переменных, указанных в объявлении текущей обрабатываемой функции
-	var lineCount = 0; //номер текущей строки
-	var registerCount = 1; //указатель на используемый в данный момент регистор процессора
-	var lastEndString = 0; //указатель на токен, являющийся последним в предыдущей строке
-	var labelNumber = 0; //номер ссылки, необходим для создания уникальных имен ссылок
-	var localStackLength = 0; //используется в функциях для работы с локальными переменными относительно указателя стека
-	var switchStack = []; //указывает на последний switch, необходимо для обработки break
+	var isIntoFunction = false; //are we in the function body
+	var functionVarTable = []; //table of variables specified in the declaration of the current function being processed
+	var lineCount = 0; //current line number
+	var registerCount = 1; //pointer to the processor register currently in use
+	var lastEndString = 0; //pointer to the last token in the previous line
+	var labelNumber = 0; //link number, needed to create unique link names
+	var localStackLength = 0; //used in functions for working with local variables relative to the stack pointer
+	var switchStack = []; //points to the last switch, necessary for processing break
 
 	function putError(line, error, par) {
-		var er = 'uncown';
+		var er = 'unknown';
 		if (language == 'rus')
 			switch (error) {
 			case 0:
@@ -307,7 +307,7 @@ function compile(t) {
 			}
 		info("" + line + " " + er);
 	}
-	//получаем следующий токен, возвращаем false если следующего токена не существует
+	//get the next token, return false if the next token does not exist
 	function getToken() {
 		lastToken = thisToken;
 		if (thisTokenNumber < t.length) {
@@ -318,7 +318,7 @@ function compile(t) {
 		thisToken = false;
 		return false;
 	}
-	//откатываемся к предыдущему токену
+	//roll back to the previous token
 	function previousToken() {
 		if (thisTokenNumber > 1) {
 			thisTokenNumber--;
@@ -332,7 +332,7 @@ function compile(t) {
 		} else
 			return false;
 	}
-	//получение ранга операции для правильного порядка выполнения математических операций
+	//getting the rank of an operation for the correct order of performing mathematical operations
 	function getRangOperation(t) {
 		switch (t) {
 		case '>':
@@ -348,7 +348,7 @@ function compile(t) {
 		case '|':
 		case '&':
 		case '^':
-			return 1;
+			return 2;
 		case '+':
 		case '-':
 			return 3;
@@ -356,12 +356,11 @@ function compile(t) {
 		case '/':
 		case '%':
 			return 4;
-		
 		}
 		return 0;
 	}
 
-	//регистрация функции: имя, тип возвращаемых данных, операнды, объявлена ли функция, исходный код, нужно ли вставлять функцию вместо перехода
+	//function registration: name, type of returned data, operands, whether a function is declared, source code, whether to insert a function instead of a jump
 	function registerFunction(name, ftype, operands, declar, asm, inline, varLength) {
 		var pos = -1;
 		for (var i = 0; i < functionTable.length; i++) {
@@ -370,9 +369,9 @@ function compile(t) {
 		}
 		if (pos >= 0 && functionTable[pos].declar == 1) {
 			putError(lineCount, 0, name);
-			//info("" + lineCount + " функция " + name + " уже была объявлена");
+			//info("" + lineCount + " the function " + name + " has already been declared");
 		} else if (pos == -1) {
-			// имя функции, тип возвращаемых данных, операнды, объявлена ли функция, используется ли функция, код функции, нужно ли вставлять функцию вместо перехода
+			//function name, return type, operands, whether a function is declared, whether a function is used, function code, whether to insert a function instead of a jump
 			functionTable.push({
 				name: name,
 				type: ftype,
@@ -386,14 +385,14 @@ function compile(t) {
 		} else {
 			if (!(functionTable[pos].type == ftype)) {
 				putError(lineCount, 1, name);
-				//info("" + lineCount + " функция " + name + " не соответствует прототипу");
+				//info("" + lineCount + " function " + name + " does not match the prototype");
 			}
 			functionTable[pos].declar = declar;
 			functionTable[pos].asm = asm;
 			functionTable[pos].varLength = varLength;
 		}
 	}
-	//обработка встреченной в коде функции
+	//processing the function met in the code
 	function addFunction(type) {
 		var name = thisToken;
 		var start = 0;
@@ -401,18 +400,18 @@ function compile(t) {
 		localVarTable = [];
 		functionVarTable = [];
 		registerCount = 1;
-		//main вызывается всегда, так что пока что просто ее перепрыгиваем
+		//main is always called, so for now just jump it
 		if (name == 'main')
-			asm.push(' JMP _end_main');
+			asm.push('JMP _end_main');
 		getToken();
 		getToken();
-		//добавляем в таблицу переменные функции, сразу тип, затем имя, подряд для упрощения поиска (имя все равно не может соответствовать типу
+		//add function variables to the table, immediately type, then name, in a row to simplify the search (the name still cannot match the type
 		while (thisToken != ')') {
 			if (isType(thisToken))
 				functionVarTable.push(thisToken);
 			else {
 				putError(lineCount, 2, '');
-				//info("" + lineCount + " ожидалось определение типа");
+				//info("" + lineCount + "expected type definition");
 				return false;
 			}
 			getToken();
@@ -431,37 +430,40 @@ function compile(t) {
 					getToken();
 				else if (thisToken != ')') {
 					putError(lineCount, 3, '');
-					//info("" + lineCount + " ожидалась запятая или закрывающая скобка");
+					//info("" + lineCount + "expected comma or closing bracket");
 					return false;
 				}
 			}
 		}
 		getToken();
 		removeNewLine();
-		//если следует точка с запятой, значит тело функции будет описано дальше. Регистрируем функцию, что бы можно было ее использовать
+		//if a semicolon follows, then the function body will be described later. Register a function so that you can use it
 		if (thisToken == ';') {
 			registerFunction(name, type, functionVarTable, 0, [], 0, 0);
 		}
-		//иначе обрабатываем содержимое функции
+		//otherwise we process the contents of the function
 		else {
 			isIntoFunction = true;
 			registerFunction(name, type, functionVarTable, 0, [], 0, 0);
 			if (thisToken != '{') {
 				putError(lineCount, 4, '');
-				//info("" + lineCount + " ожидалась фигурная открывающая скобка");
+				//info("" + lineCount + "expected curly opening bracket");
 				return false;
 			}
-			//запоминаем начала ассемблерного кода, принадлежащего функции
+			//remember the beginning of the assembler code belonging to the function
 			start = asm.length;
+			asm.push(' ');
 			asm.push('_' + name + ':');
 			skipBrace();
 			asm.push(' RET');
-			//если это main указываем окончание функции
+			asm.push(' ');
+			//if it is main, indicate the end of the function
 			if (name == 'main') {
 				registerFunction(name, type, functionVarTable, 1, [], false, localVarTable.length);
+				asm.push(' ');
 				asm.push('_end_main:');
 			}
-			//иначе вырезаем весь код функции из таблицы asm и сохраняем в таблицу функций. Это позволит в итоге добавить в финальный код только используемые функции
+			//otherwise, we cut out the entire function code from the asm table and save it in the function table. This will allow to add only used functions to the final code.
 			else
 				registerFunction(name, type, functionVarTable, 1, asm.splice(start, asm.length - start), false, localVarTable.length);
 			localVarTable = [];
@@ -469,7 +471,7 @@ function compile(t) {
 		}
 		thisFunction = '';
 	}
-	//вставка кода функции
+	//function code insertion
 	function inlineFunction(func) {
 		getToken();
 		if (thisToken != ')') {
@@ -490,15 +492,15 @@ function compile(t) {
 				}
 				if (i > func.operands.length / 2 && !longArg) {
 					putError(lineCount, 3, t);
-					//info("" + lineCount + " ожидалась закрывающая скобка в функции " + t);
+					//info("" + lineCount + " expected closing bracket in function " + t);
 					return false;
 				}
 			}
 		}
-		//проверяем соответствие количества аргументов заявленному
+		//check the number of arguments declared
 		if (i < func.operands.length / 2 && !longArg) {
 			putError(lineCount, 6, t);
-			//info("" + lineCount + " ожидался аргумент в функции " + t);
+			//info("" + lineCount + " expected argument in function " + t);
 			return false;
 		}
 		asm.push(func.asm.replace(/[Rr]\%(\d)/g, function (str, reg, offset, s) {
@@ -513,7 +515,7 @@ function compile(t) {
 		else if (thisToken == ';')
 			previousToken();
 	}
-	//обработка вызова функции
+	//function call processing
 	function callFunction(t) {
 		var func;
 		var longArg = false;
@@ -527,7 +529,7 @@ function compile(t) {
 				break;
 			}
 		}
-		//проверка на неопределенное количество аргументов
+		//checking for an indefinite number of arguments
 		if (func.operands.length > 0 && func.operands[func.operands.length - 1] == '...')
 			longArg = true;
 		getToken();
@@ -539,7 +541,7 @@ function compile(t) {
 				return;
 			} else
 				putError(lineCount, 7, t);
-			//info("" + lineCount + " ожидалась открывающая скобка в функции " + t);
+			//info("" + lineCount + " expected opening bracket in function " + t);
 			return false;
 		}
 		if (func.inline == true) {
@@ -549,14 +551,14 @@ function compile(t) {
 		func.use++;
 		i = 0;
 		if (registerCount > 1) {
-			//если функция должна вернуть значение, то складываем на стек все значения регистров, содержащих данные, дабы функция их не повредила
+			//if the function should return a value, then we stack on the stack all the values of the registers containing the data, so that the function does not damage them
 			if (func.type != 'void') {
 				asm.push(' PUSHN R' + (registerCount - 1));
 				pushOnStack = registerCount - 1;
 				localStackLength += (registerCount - 1);
 			} else
 				putError(lineCount, 8, func.name);
-			//info('' + lineCount + ' функция ' + func.name + ' не может возвращать значение');
+			//info('' + lineCount + ' function ' + func.name + ' cannot return a value');
 		} else
 			registerCount++;
 		getToken();
@@ -582,20 +584,20 @@ function compile(t) {
 				localStackLength += 1;
 				if (i > func.operands.length / 2 && !longArg) {
 					putError(lineCount, 5, t);
-					//info("" + lineCount + " ожидалась закрывающая скобка в функции " + t);
+					//info("" + lineCount + " expected closing bracket in function " + t);
 					return false;
 				}
 			}
 		}
-		//проверяем соответствие количества аргументов заявленному
+		//check the number of arguments declared
 		if (i < func.operands.length / 2 && !longArg) {
 			putError(lineCount, 6, t);
-			//info("" + lineCount + " ожидался аргумент в функции " + t);
+			//info("" + lineCount + " expected argument in function " + t);
 			return false;
 		}
 		if (longArg)
 			asm.push(' LDC R1,' + (operandsCount * 2));
-		//освобождаем место на стеке для переменных
+		//free up stack space for variables
 		if (func.varLength == 0 && thisFunction == func.name)
 			func.varLength = localVarTable.length;
 		if (func.varLength > 0) {
@@ -605,18 +607,18 @@ function compile(t) {
 				asm.push(' LDC R15,' + func.varLength + '\n SUB R0,R15');
 		}
 		asm.push(' CALL _' + func.name);
-		//функции возвращают значение в первый регистр, переносим в нужный нам
+		//functions return the value in the first register, transfer to the one we need
 		if (func.type != 'void') {
 			if (registerCount != 1) {
 				asm.push(' MOV R' + registerCount + ',R1');
 			}
 		}
-		//восстанавливаем указатель стека
+		//restoring the stack pointer
 		if ((operandsCount * 2 + func.varLength) > 0xf)
 			asm.push(' LDC R15,' + (operandsCount * 2 + func.varLength) + '\n ADD R0,R15');
 		else if ((operandsCount * 2 + func.varLength) > 0)
 			asm.push(' INC R0,' + (operandsCount * 2 + func.varLength));
-		//возвращаем все данные регистров из стека
+		//we return all the register data from the stack
 		if (registerCount > 1) {
 			if (pushOnStack > 0)
 				asm.push(' POPN R' + pushOnStack);
@@ -630,7 +632,7 @@ function compile(t) {
 		else if (thisToken == ';')
 			previousToken();
 	}
-	//добавляем новую переменную в таблицу
+	//add a new variable to the table
 	function addVar(type) {
 		if (isIntoFunction) {
 			localVarTable.push(type);
@@ -642,9 +644,10 @@ function compile(t) {
 				length: 1
 			});
 			asm.push(' _' + thisToken + ' word ? ');
+			asm.push(' ');
 		}
 	}
-	//возвращаем тип и имя переменной, если такая существует
+	//return the type and name of the variable, if one exists
 	function getVar(t) {
 		for (var i = 0; i < varTable.length; i++) {
 			if (varTable[i].name == t)
@@ -656,7 +659,7 @@ function compile(t) {
 			length: 1
 		}
 	}
-	//обрабатываем переменные, данные которых содержатся на стеке
+	//process variables whose data is on the stack
 	function localVarToken() {
 		var type,
 		l,
@@ -668,16 +671,17 @@ function compile(t) {
 		if (number == -1) {
 			number = localVarTable.indexOf(thisToken);
 			type = localVarTable[number - 1];
-			l = localStackLength * 2 + number + 1; //позиция переменной относительно указателя на стек
+			l = localStackLength * 2 + number + 1; //variable position relative to stack pointer
 		} else {
 			type = functionVarTable[number - 1];
+			//number += localVarTable.length;
 			l = localStackLength * 2 + functionVarTable.length + localVarTable.length - number + 1;
 		}
 		var token = thisToken;
 		getToken();
-		//если переменная является массивом
+		//if the variable is an array
 		if (thisToken == '[') {
-			//вычисление номера ячейки массива
+			//calculating the array cell number
 			while (thisToken != ']') {
 				getToken();
 				if (!thisToken)
@@ -685,7 +689,7 @@ function compile(t) {
 				execut();
 			}
 			getToken();
-			//загрузка ячейки массива
+			//load cell array
 			if (thisToken != '=') {
 				previousToken();
 				if (type == 'char' || type == '*char') {
@@ -694,22 +698,22 @@ function compile(t) {
 						asm.push(' LDC R' + (registerCount - 1) + ',(R' + (registerCount + 1) + '+R' + (registerCount - 1) + ')');
 					} else
 						putError(lineCount, 9, '');
-					//info("" + lineCount + " работа с локальными массивами не поддерживается ");
+					//info("" + lineCount + " work with local arrays is not supported");
 				} else {
 					if (type == '*int' && !point) {
 						asm.push(' LDIAL R' + (registerCount + 1) + ',(' + l + '+R0) ;' + token);
 						asm.push(' LDC R' + (registerCount - 1) + ',(R' + (registerCount + 1) + '+R' + (registerCount - 1) + ')');
 					} else
 						putError(lineCount, 9, '');
-					//info("" + lineCount + " работа с локальными массивами не поддерживается ");
+					//info("" + lineCount + " work with local arrays is not supported");
 				}
 			}
-			//сохранение ячейки массива
+			//save cell array
 			else {
 				getToken();
 				execut();
 				getToken();
-				//если за переменной следует математическая операция, то продолжаем трансляцию кода
+				//if the variable is followed by a mathematical operation, then we continue to translate the code
 				if (getRangOperation(thisToken) > 0)
 					execut();
 				registerCount--;
@@ -719,7 +723,7 @@ function compile(t) {
 						asm.push(' STC (R' + (registerCount + 1) + '+R' + (registerCount - 1) + '),R' + registerCount);
 					} else {
 						putError(lineCount, 9, '');
-						//info("" + lineCount + " работа с локальными массивами не поддерживается ");
+						//info("" + lineCount + " work with local arrays is not supported");
 					}
 				} else {
 					if (type == '*int' && !point) {
@@ -727,13 +731,13 @@ function compile(t) {
 						asm.push(' STC (R' + (registerCount + 1) + '+R' + (registerCount - 1) + '),R' + registerCount);
 					} else {
 						putError(lineCount, 9, '');
-						//info("" + lineCount + " работа с локальными массивами не поддерживается ");
+						//info("" + lineCount + " work with local arrays is not supported");
 					}
 				}
 				registerCount--;
 			}
 		}
-		//получить значение переменной
+		//get the value of a variable
 		else if (thisToken != '=' && thisToken != '+=' && thisToken != '-=' && thisToken != '*=' && thisToken != '/=') {
 			previousToken();
 			if (type == 'char')
@@ -742,7 +746,7 @@ function compile(t) {
 				asm.push(' LDI R' + registerCount + ',(' + l + '+R0) ;' + token);
 			registerCount++;
 		}
-		//присвоить значение переменной
+		//assign a value to a variable
 		else {
 			op = thisToken;
 			getToken();
@@ -753,7 +757,7 @@ function compile(t) {
 			if (getRangOperation(thisToken) > 0)
 				execut();
 			registerCount--;
-			//---------
+
 			if (op == '+=') {
 				asm.push(' LDI R' + (registerCount + 1) + ',(' + l + '+R0) ;' + token);
 				asm.push(' ADD R' + registerCount + ',R' + (registerCount + 1));
@@ -778,7 +782,7 @@ function compile(t) {
 
 		}
 	}
-	//преобразование строки в формат, понятный ассемблеру, с заменой спецсимволов на их числовой код
+	//converting a string to a format understandable to assembler, with the replacement of special characters with their numeric code
 	function pushString() {
 		var s = '';
 		while (thisToken[0] == '"') {
@@ -803,26 +807,28 @@ function compile(t) {
 			s += ',';
 		}
 		previousToken();
-		//dataAsm вставляется в таблицу asm после завершения компиляции
+		//dataAsm is inserted into the asm table after compilation is complete
 		dataAsm.push('DB ' + s + '0');
+		dataAsm.push(' ');
 	}
-	//добавляем массив
+	//add an array
 	function addArray(type) {
 		var name = lastToken;
 		var length = 1;
 		var buf = '';
 		getToken();
-		//количество элементов не указано
+		//number of items not specified
 		if (thisToken == ']') {
 			getToken();
 			if (thisToken != '=')
 				putError(lineCount, 10, '');
-			//info("" + lineCount + " не указана длина массива");
+				//info("" + lineCount + " the length of the array is not specified");
 			else
 				getToken();
-			//массив это строка символов
+			//an array is a string of characters
 			if (thisToken[0] == '"') {
 				length = thisToken.length - 2;
+				dataAsm.push(' ');
 				dataAsm.push('_' + name + ':');
 				pushString();
 				varTable.push({
@@ -831,7 +837,7 @@ function compile(t) {
 					length: length
 				});
 			}
-			//массив уже заполнен, считаем количество элементов
+			//the array is already filled, count the number of elements
 			else if (thisToken == '{') {
 				while (thisToken && thisToken != '}') {
 					getToken();
@@ -849,12 +855,15 @@ function compile(t) {
 					removeNewLine();
 					if (!(thisToken == '}' || thisToken == ','))
 						putError(lineCount, 11, '');
-					//info("" + lineCount + " неправильное объявление массива");
+					//info("" + lineCount + " invalid array declaration");
 				}
-				if (type == 'int')
+				if (type == 'int') {
 					dataAsm.push('_' + name + ': \n DW ' + buf.substring(0, buf.length - 1));
-				else if (type == 'char')
+					dataAsm.push(' ');
+				} else if (type == 'char') {
 					dataAsm.push('_' + name + ': \n DB ' + buf.substring(0, buf.length - 1));
+					dataAsm.push(' ');
+				}
 				varTable.push({
 					name: name,
 					type: type,
@@ -862,7 +871,7 @@ function compile(t) {
 				});
 			}
 		}
-		//количество элементов указано
+		//number of items indicated
 		else if (isNumber(thisToken)) {
 			length = thisToken * 1 + 1;
 			var newArr = '';
@@ -878,7 +887,7 @@ function compile(t) {
 			getToken();
 			if (thisToken != ']')
 				putError(lineCount, 11, '');
-			//info("" + lineCount + " неправильное объявление массива");
+			//info("" + lineCount + " invalid array declaration");
 			getToken();
 			if (thisToken == '=') {
 				getToken();
@@ -901,7 +910,7 @@ function compile(t) {
 					removeNewLine();
 					if (!(thisToken == '}' || thisToken == ','))
 						putError(lineCount, 11, '');
-					//info("" + lineCount + " неправильное объявление массива");
+					//info("" + lineCount + " invalid array declaration");
 				}
 				if (type == 'int')
 					newArr = ('_' + name + ': \n DW ' + buf.substring(0, buf.length - 1));
@@ -920,11 +929,12 @@ function compile(t) {
 				});
 			}
 			dataAsm.push(newArr);
+			dataAsm.push(' ');
 		} else
 			putError(lineCount, 11, '');
-		//info("" + lineCount + " неправильное объявление массива");
+		//info("" + lineCount + " invalid array declaration");
 	}
-	//проверка, является ли токен t функцией
+	//checking if token t is a function
 	function isFunction(t) {
 		for (var i = 0; i < functionTable.length; i++) {
 			if (functionTable[i].name == t)
@@ -932,7 +942,7 @@ function compile(t) {
 		}
 		return false;
 	}
-	//проверка, является ли токен t переменной
+	//checking if token t is a variable
 	function isVar(t) {
 		for (var i = 0; i < varTable.length; i++) {
 			if (varTable[i].name == t)
@@ -940,7 +950,7 @@ function compile(t) {
 		}
 		return false;
 	}
-	//проверка, является ли токен t объявлением типа
+	//checking if the token t is a type declaration
 	function isType(t) {
 		if (t == 'int' || t == 'char' || t == 'void')
 			return true;
@@ -948,11 +958,11 @@ function compile(t) {
 			return true;
 		return false;
 	}
-	//проверка, является ли токен t числом
+	//checking if token t is a number
 	function isNumber(t) {
 		return !isNaN(parseFloat(t)) && isFinite(t);
 	}
-	//обрабатываем переменную
+	//process the variable
 	function varToken() {
 		var v = getVar(thisToken);
 		var point = false;
@@ -961,9 +971,9 @@ function compile(t) {
 		if (lastToken == '*' && registerCount == 1)
 			point = true;
 		getToken();
-		//если переменная является массивом
+		//if the variable is an array
 		if (thisToken == '[') {
-			//вычисление номера ячейки массива
+			//calculating the array cell number
 			getToken();
 			while (thisToken != ']') {
 				if (!thisToken) {
@@ -977,7 +987,7 @@ function compile(t) {
 				}
 			}
 			getToken();
-			//загрузка ячейки массива
+			//load cell array
 			if (thisToken != '=' && thisToken != '+=' && thisToken != '-=' && thisToken != '*=' && thisToken != '/=') {
 				previousToken();
 				if (v.type == 'char' || v.type == '*char') {
@@ -998,13 +1008,13 @@ function compile(t) {
 					}
 				}
 			}
-			//сохранение ячейки массива
+			//save cell array
 			else {
 				op = thisToken;
 				getToken();
 				execut();
 				getToken();
-				//если за переменной следует математическая операция, то продолжаем трансляцию кода
+				//if the variable is followed by a mathematical operation, then we continue to translate the code
 				if (getRangOperation(thisToken) > 0)
 					execut();
 				registerCount--;
@@ -1059,7 +1069,7 @@ function compile(t) {
 				registerCount--;
 			}
 		}
-		//загрузка значения переменной
+		//load variable value
 		else if (thisToken != '=' && thisToken != '+=' && thisToken != '-=' && thisToken != '*=' && thisToken != '/=') {
 			previousToken();
 			if (v.length > 1) {
@@ -1071,11 +1081,11 @@ function compile(t) {
 			}
 			registerCount++;
 		}
-		//присваивание значения переменной
+		//assigning a value to a variable
 		else
 			assigment();
 	}
-	//обработка возврата из функции
+	//function return processing
 	function returnToken() {
 		registerCount = 2;
 		while (thisToken != ';') {
@@ -1089,12 +1099,13 @@ function compile(t) {
 		registerCount--;
 		if (registerCount > 1) {
 			putError(lineCount, 12, '');
-			//info("" + lineCount + " неверное количество аргументов");
+			//info("" + lineCount + " invalid number of arguments");
 		}
 		registerCount == 1;
 		asm.push(' RET ');
+		asm.push(' ');
 	}
-	//присваивание значения переменной
+	//assigning a value to a variable
 	function assigment() {
 		var variable = lastToken;
 		var op = thisToken;
@@ -1130,14 +1141,14 @@ function compile(t) {
 		}
 		previousToken();
 	}
-	//обработка сложения/вычитания/декремента/инкремента
+	//addition / subtraction / decrement / increment processing
 	function addSub() {
 		var variable = lastToken;
 		var operation = thisToken;
 		getToken();
-		//если инкремент
+		//if increment
 		if (thisToken == '+' && operation == '+') {
-			//если инкремент следует за переменной (var++)
+			//if increment follows variable (var ++)
 			if (isVar(variable) || localVarTable.indexOf(variable) > -1 || functionVarTable.indexOf(variable) > -1) {
 				if (localVarTable.indexOf(variable) > -1) {
 					if (registerCount == 1) {
@@ -1150,7 +1161,7 @@ function compile(t) {
 				} else if (isVar(variable))
 					asm.push(' INC _' + variable);
 			}
-			//если переменная следует за инкрементом (++var)
+			//if the variable follows the increment (++ var)
 			else {
 				getToken();
 				if (localVarTable.indexOf(thisToken) > -1) {
@@ -1165,7 +1176,7 @@ function compile(t) {
 			}
 			getToken();
 		}
-		//если декремент
+		//if decrement
 		else if (thisToken == '-' && operation == '-') {
 			if (isVar(variable) || localVarTable.indexOf(variable) > -1 || functionVarTable.indexOf(variable) > -1) {
 				if (localVarTable.indexOf(variable) > -1) {
@@ -1196,7 +1207,7 @@ function compile(t) {
 			if (getRangOperation(thisToken) == 0)
 				if (!(thisToken == ',' || thisToken == ')' || thisToken == ';'))
 					getToken();
-			//если следующая операция выше рангом, то выполняем сразу ее
+			//if the next operation is higher in rank, then we immediately execute it
 			if (getRangOperation(thisToken) > 3)
 				execut();
 			registerCount--;
@@ -1208,7 +1219,7 @@ function compile(t) {
 				execut();
 		}
 	}
-	//деление, умножение, остаток
+	//division, multiplication, remainder
 	function divMul() {
 		var operation = thisToken;
 		getToken();
@@ -1216,7 +1227,7 @@ function compile(t) {
 		if (getRangOperation(thisToken) == 0)
 			if (!(thisToken == ',' || thisToken == ')' || thisToken == ';' || thisToken == '?'))
 				getToken();
-		//если следующая операция выше рангом, то выполняем сразу ее
+		//if the next operation is higher in rank, then we immediately execute it
 		if (getRangOperation(thisToken) > 4)
 			execut();
 		registerCount--;
@@ -1229,7 +1240,7 @@ function compile(t) {
 		if (!(thisToken == ',' || thisToken == ')' || thisToken == ';' || thisToken == '?'))
 			execut();
 	}
-	// & | ^
+	//& | ^
 	function andOrXor() {
 		var operation = thisToken;
 		getToken();
@@ -1241,7 +1252,7 @@ function compile(t) {
 		if (getRangOperation(thisToken) == 0)
 			if (!(thisToken == ',' || thisToken == ')' || thisToken == ';'))
 				getToken();
-		//если следующая операция выше рангом, то выполняем сразу ее
+		//if the next operation is higher in rank, then we immediately execute it
 		if (getRangOperation(thisToken) > 2)
 			execut();
 		if (operation.length > 1)
@@ -1260,11 +1271,11 @@ function compile(t) {
 		if (!(thisToken == ',' || thisToken == ')' || thisToken == ';'))
 			execut();
 	}
-	//сравнение
+	//comparison
 	function compare() {
 		var operation = thisToken;
 		getToken();
-		//если следующий токен операция, то это могут быть ==, <=, >=, !=
+		//if the next token is an operation, then it can be ==, <=,> =,! =
 		if (getRangOperation(thisToken) == 1) {
 			operation += thisToken;
 			getToken();
@@ -1299,26 +1310,26 @@ function compile(t) {
 		if (!(thisToken == ',' || thisToken == ')' || thisToken == ';'))
 			execut();
 	}
-	//обработка условных ветвлений
+	//conditional branch processing
 	function ifToken() {
-		//labe делает ссылки уникальными
+		//labe makes links unique
 		var labe = labelNumber;
 		labelNumber++;
 		getToken();
 		if (thisToken != '(')
 			putError(lineCount, 13, 'if');
-		//info("" + lineCount + " ожидалась открывающая скобка в конструкции if");
+		//info("" + lineCount + " expected opening bracket in the if construct");
 		skipBracket();
 		removeNewLine();
 		registerCount--;
 		asm.push(' CMP R' + registerCount + ',0 \n JZ end_if_' + labe);
 		getToken();
 		removeNewLine();
-		//если открывающая фигурная скобка пропускаем блок этих скобок
+		//if the opening brace skips the block of these brackets
 		if (thisToken == '{') {
 			skipBrace();
 		}
-		//иначе просто выполняем до конца строки
+		//otherwise just execute to the end of the line
 		else {
 			execut();
 			if (isVar(thisToken)) {
@@ -1331,7 +1342,7 @@ function compile(t) {
 		registerCount = 1;
 		getToken();
 		removeNewLine();
-		//обработка else
+		//processing else
 		if (thisToken == 'else') {
 			asm.push('JMP end_else_' + labe);
 			asm.push('end_if_' + labe + ':');
@@ -1350,7 +1361,7 @@ function compile(t) {
 		getToken();
 		if (thisToken != '(')
 			putError(lineCount, 13, 'while');
-		//info("" + lineCount + " ожидалась открывающая скобка в конструкции while");
+		//info("" + lineCount + " expected opening bracket in the while construct");
 		asm.push('start_while_' + labe + ':');
 		skipBracket();
 		registerCount--;
@@ -1385,8 +1396,8 @@ function compile(t) {
 		removeNewLine();
 		if (thisToken != '(')
 			putError(lineCount, 13, 'for');
-		//info("" + lineCount + " ожидалась открывающая скобка в конструкции for");
-		//обрабатываем часть до первой точки с запятой, это выполнится только один раз
+		//info("" + lineCount + " expected opening bracket in the for construct");
+		//process the part to the first semicolon, this will be done only once
 		while (thisToken != ';') {
 			getToken();
 			if (!thisToken)
@@ -1395,7 +1406,7 @@ function compile(t) {
 		}
 		registerCount = 1;
 		getToken();
-		//проверка будет выполнятся каждую итерацию
+		//check will be performed every iteration
 		asm.push('start_for_' + labe + ':');
 		execut();
 		while (thisToken != ';') {
@@ -1406,7 +1417,7 @@ function compile(t) {
 		}
 		registerCount--;
 		asm.push(' CMP R' + registerCount + ',0 \n JZ end_for_' + labe);
-		//запоминаем третий параметр if, не транслируя, он будет выполнятся в конце цикла
+		//remember the third parameter if, not translating, it will be executed at the end of the loop
 		startToken = thisTokenNumber;
 		while (!(thisToken == ')' && bracketCount == 0)) {
 			if (thisToken == '(')
@@ -1428,18 +1439,18 @@ function compile(t) {
 				execut();
 			}
 		}
-		//теперь транслируем третий параметр
+		//now broadcast the third parameter
 		memToken = thisTokenNumber;
 		thisTokenNumber = startToken;
 		registerCount = 1;
 		getToken();
 		skipBracket();
-		//и восстанавливаем позицию транслирования
+		//and restore the broadcast position
 		thisTokenNumber = memToken;
 		asm.push(' JMP start_for_' + labe + ' \nend_for_' + labe + ':');
 		registerCount = 1;
 	}
-	
+
 	function ternaryToken(){
 		var labe = labelNumber;
 		var saveRegCount;
@@ -1447,12 +1458,16 @@ function compile(t) {
 		registerCount--;
 		asm.push(' CMP R' + registerCount + ',0 \n JZ end_ternary_' + labe);
 		saveRegCount = registerCount;
+
 		while (thisToken != ':') {
 			getToken();
+
 			if (!thisToken)
 				return;
+
 			execut();
 		}
+
 		asm.push(' JMP end_ternary_' + (labe + 1) + ':');
 		asm.push('end_ternary_' + labe + ':');
 		registerCount = saveRegCount;
@@ -1460,17 +1475,17 @@ function compile(t) {
 		execut();
 		asm.push('end_ternary_' + (labe + 1) + ':');
 	}
-	
+
 	function switchToken() {
 		var labe = labelNumber;
 		labelNumber++;
 		getToken();
 		if (thisToken != '(')
 			putError(lineCount, 13, 'switch');
-		//info("" + lineCount + " ожидалась открывающая скобка в конструкции switch");
+		//info("" + lineCount + " expected opening bracket in the switch construct");
 		skipBracket();
 		registerCount--;
-		//оставляем пустую ячейку в таблице asm и запоминаем ее позицию, сюда будем добавлять весь код, сгенерированный case
+		//leave an empty cell in the asm table and remember its position, here we will add all the code generated by case
 		switchStack.push({
 			block: asm.length,
 			labe: labe
@@ -1483,7 +1498,7 @@ function compile(t) {
 			skipBrace();
 		} else {
 			putError(lineCount, 13, 'switch');
-			//info("" + lineCount + " ожидалась открывающая фигурная скобка в конструкции switch");
+			//info("" + lineCount + " expected opening curly bracket in the switch structure");
 		}
 		asm.push('end_switch_' + labe + ':');
 		switchStack.pop();
@@ -1498,12 +1513,12 @@ function compile(t) {
 		};
 		var labe = labelNumber;
 		labelNumber++;
-		//ищем к какому switch относится этот case
+		//look for which switch this case refers to
 		if (switchStack.length > 0)
 			lastSwitch = switchStack[switchStack.length - 1];
 		else
 			putError(lineCount, 14, '');
-		//info("" + lineCount + " отсутствует конструкция switch ");
+		//info("" + lineCount + " missing switch construct");
 		getToken();
 		if (isNumber(thisToken)) {
 			asm[lastSwitch.block] += 'CMP R1,' + parseInt(thisToken) + ' \n JZ case_' + labe + '\n ';
@@ -1511,10 +1526,10 @@ function compile(t) {
 			getToken();
 			if (thisToken != ':')
 				putError(lineCount, 15, '');
-			//info("" + lineCount + " ожидалось двоеточие ");
+			//info("" + lineCount + " a colon was expected");
 		} else {
 			putError(lineCount, 16, '');
-			//info("" + lineCount + " ожидалось число ");
+			//info("" + lineCount + " expected number");
 		}
 	}
 
@@ -1529,15 +1544,15 @@ function compile(t) {
 			lastSwitch = switchStack[switchStack.length - 1];
 		else
 			putError(lineCount, 14, '');
-		//info("" + lineCount + " отсутствует конструкция switch ");
+		//info("" + lineCount + " missing switch construct");
 		getToken();
 		if (thisToken != ':')
 			putError(lineCount, 15, '');
-		//info("" + lineCount + " ожидалось двоеточие ");
+		//info("" + lineCount + " a colon was expected");
 		asm[lastSwitch.block] += 'JMP default_' + labe + '\n ';
 		asm.push(' default_' + labe + ':');
 	}
-	//break в данный момент работает только для прерывания switch, нужно доработать
+	//break at the moment only works to interrupt the switch, you need to refine
 	function breakToken() {
 		var lastSwitch = {
 			block: 0,
@@ -1548,9 +1563,9 @@ function compile(t) {
 			asm.push(' JMP end_switch_' + lastSwitch.labe);
 		} else
 			putError(lineCount, 14, '');
-		//info("" + lineCount + " отсутствует конструкция switch ");
+		//info("" + lineCount + " missing switch construct");
 	}
-	//обработка объявления типа, предполагаем что за ним следует объявление переменной или функции
+	//processing a type declaration, assuming it is followed by a variable or function declaration
 	function typeToken() {
 		var type = thisToken;
 		if (lastToken == '*')
@@ -1562,21 +1577,21 @@ function compile(t) {
 				type = thisToken + type;
 			getToken();
 		}
-		//приведение типа, не реализовано
+		//type cast, not implemented
 		if (thisToken == ')') {
 			getToken();
 			execut();
 			return;
 		}
 		getToken();
-		//вызываем регестрацию функции
+		//call function registration
 		if (thisToken == '(') {
 			previousToken();
 			addFunction(type);
 		} else if (thisToken == '[') {
 			addArray(type);
 		}
-		//объявление переменных одного типа через запятую, присваивание при этом не поддерживается
+		//declaration of variables of the same type, separated by commas, assignment is not supported
 		else if (thisToken == ',') {
 			previousToken();
 			addVar(type);
@@ -1587,14 +1602,14 @@ function compile(t) {
 				getToken();
 				if (!(thisToken == ',' || thisToken == ';'))
 					putError(lineCount, 17, '');
-				//info("" + lineCount + " неподдерживаемое объявление переменных");
+				//info("" + lineCount + " unsupported variable declaration");
 			}
 		} else {
 			previousToken();
 			addVar(type);
 		}
 	}
-	//обработка указателей, стандарту не соответствует
+	//processing of pointers, does not comply with the standard
 	function pointerToken() {
 		if (thisToken == '&') {
 			getToken();
@@ -1619,7 +1634,7 @@ function compile(t) {
 			}
 		}
 	}
-	//обработка строки. Добавляет строку и оставляет в регистре ссылку на нее
+	//line processing. Adds a line and leaves a link to it in the register
 	function stringToken() {
 		var labe = labelNumber;
 		labelNumber++;
@@ -1628,22 +1643,23 @@ function compile(t) {
 		asm.push(' LDI R' + registerCount + ',_str' + labe);
 		registerCount++;
 	}
-	//удаляем перевод строки, если есть
+	//delete line feed, if any
 	function removeNewLine() {
 		var s;
-		if (thisToken === '\n') {
+		if (thisToken == '\n') {
 			if (lastToken == ';')
 				registerCount = 1;
 			if (thisTokenNumber - lastEndString > 1) {
-				//добавляем информацию для отладки
+				//add debugging information
 				numberDebugString.push([asm.length, lineCount, 0]);
-				//добавляем комментарии в таблицу asm для отладки
+				//add comments to the asm table for debugging
 				s = ';' + lineCount + ' ' + t.slice(lastEndString, thisTokenNumber - 1).join(' ').replace(/\r|\n/g, '');
 				if (s.length > 40)
 					s = s.substring(0, 40) + '...';
+				s = s + "\n";
 				asm.push(s);
 			}
-			//пропускаем все последующие пустые переводы строки
+			//skip all subsequent empty line breaks
 			while (thisToken === '\n') {
 				lineCount++;
 				lastEndString = thisTokenNumber;
@@ -1651,7 +1667,7 @@ function compile(t) {
 			}
 		}
 	}
-	//выполняем блок скобок
+	//we execute the block of brackets
 	function skipBracket() {
 		while (thisToken && thisToken != ')') {
 			if (getRangOperation(thisToken) == 0)
@@ -1663,7 +1679,7 @@ function compile(t) {
 		removeNewLine();
 
 	}
-	//выполняем блок фигурных скобок
+	//we execute a block of curly brackets
 	function skipBrace() {
 		while (thisToken && thisToken != '}') {
 			getToken();
@@ -1677,9 +1693,9 @@ function compile(t) {
 		removeNewLine();
 		registerCount = 1;
 	}
-	//определение типа токена и необходимой операции
+	//determination of the type of token and the necessary operation
 	function execut() {
-		//выйти, если токены закончились
+		//exit if tokens run out
 		if (!thisToken) {
 			return;
 		}
@@ -1694,14 +1710,14 @@ function compile(t) {
 			callFunction(thisToken);
 		} else if (isNumber(thisToken)) {
 			thisToken = '' + parseInt(thisToken);
-			//байт код для добавления восьмибитного числа будет короче на два байта, по возможности добавляем его
+			//the byte code for adding an eight-bit number will be shorter by two bytes, if possible we add it
 			if ((thisToken * 1) < 255 && (thisToken * 1) >= 0)
 				asm.push(' LDC R' + registerCount + ',' + thisToken);
 			else
 				asm.push(' LDI R' + registerCount + ',' + thisToken);
 			registerCount++;
 		} else if (getRangOperation(thisToken) > 0) {
-			//в этих условиях скорее всего работа с указателями, но это не всегда так, нужно улучшить
+			//in these conditions, work with pointers is most likely, but this is not always the case, it is necessary to improve
 			if (thisToken == '&' && (lastToken == '(' || lastToken == '=' || lastToken == ','))
 				pointerToken();
 			else if (thisToken == '*' && (lastToken == '(' || lastToken == '=' || lastToken == ','))
@@ -1726,7 +1742,7 @@ function compile(t) {
 			skipBracket();
 			if (thisToken == ';')
 				putError(lineCount, 18, '');
-			//info("" + lineCount + " ожидалась скобка");
+			//info("" + lineCount + " expected parenthesis");
 			getToken();
 		} else if (thisToken == '=' || thisToken == '+=' || thisToken == '-=' || thisToken == '*=' || thisToken == '/=') {
 			assigment();
@@ -1761,20 +1777,20 @@ function compile(t) {
 			breakToken();
 		} else if (thisToken == 'unsigned') {
 			putError(lineCount, 19, 'switch');
-			//info("" + lineCount + "предупреждение, unsigned не реализовано " + thisToken);
+			//info("" + lineCount + " warning, unsigned not implemented " + thisToken);
 			return;
 		} else if (thisToken[0] == '"') {
 			stringToken();
 		} else {
 			if (thisToken.length > 0)
 				putError(lineCount, 20, thisToken);
-			//info("" + lineCount + " неизвестный токен " + thisToken);
+			//info("" + lineCount + " unknown token " + thisToken);
 		}
 	}
-	
+
 	numberDebugString = [];
 	console.time("compile");
-	//регистрируем некоторые стандартные функции
+	//register some standard functions
 	registerFunction('random', 'int', ['int', 'i'], 1, 'RAND R%1', true, 0);
 	registerFunction('sqrt', 'int', ['int', 'n'], 1, 'SQRT R%1', true, 0);
 	registerFunction('putchar', 'char', ['char', 'c'], 1, 'PUTC R%1', true, 0);
@@ -1811,30 +1827,37 @@ function compile(t) {
 	registerFunction('drawtile', 'void', ['int', 'x', 'int', 'y'], 1, 'DRTILE R%2,R%1', true, 0);
 	registerFunction('scroll', 'void', ['char', 'direction'], 1, 'SCROLL R%1,R%1', true, 0);
 	registerFunction('gotoxy', 'void', ['int', 'x', 'int', 'y'], 1, 'SETX R%2 \n SETY R%1', true, 0);
-	registerFunction('line', 'void', ['int', 'x', 'int', 'y', 'int', 'x1', 'int', 'y1'], 1, '_line: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n DLINE R1 \n RET', false, 0);
-	registerFunction('spritespeed', 'void', ['int', 'n', 'int', 'speed', 'int', 'dir'], 1, '_spritespeed: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n SPRSDS R1 \n RET', false, 0);
-	registerFunction('delayredraw', 'void', [], 1, '_delayredraw: \n LDF R1,6\n CMP R1,0\n JZ _delayredraw \n RET', false, 0);
-	registerFunction('distance', 'int', ['int', 'x1', 'int', 'y1', 'int', 'x2', 'int', 'y2'], 1, '_distance: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n DISTPP R1 \n RET', false, 0);
+	registerFunction('line', 'void', ['int', 'x', 'int', 'y', 'int', 'x1', 'int', 'y1'], 1, '_line: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n DLINE R1 \n RET \n', false, 0);
+	registerFunction('spritespeed', 'void', ['int', 'n', 'int', 'speed', 'int', 'dir'], 1, '_spritespeed: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n SPRSDS R1 \n RET \n', false, 0);
+	registerFunction('delayredraw', 'void', [], 1, '_delayredraw: \n LDF R1,6\n CMP R1,0\n JZ _delayredraw \n RET \n', false, 0);
+	registerFunction('distance', 'int', ['int', 'x1', 'int', 'y1', 'int', 'x2', 'int', 'y2'], 1, '_distance: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n DISTPP R1 \n RET \n', false, 0);
 	dataAsm = [];
 	dataAsm.push('_putimage: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n DRWIM R1 \n RET');
+	dataAsm.push(' ');
 	registerFunction('putimage', 'void', ['int', 'a', 'int', 'x', 'int', 'y', 'int', 'w', 'int', 'h'], 1, dataAsm, false, 0);
 	dataAsm = [];
 	dataAsm.push('_putimage1bit: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n DRWBIT R1 \n RET');
+	dataAsm.push(' ');
 	registerFunction('putimage1bit', 'void', ['int', 'a', 'int', 'x', 'int', 'y', 'int', 'w', 'int', 'h'], 1, dataAsm, false, 0);
 	dataAsm = [];
 	dataAsm.push('_putimagerle: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n DRWRLE R1 \n RET');
+	dataAsm.push(' ');
 	registerFunction('putimagerle', 'void', ['int', 'a', 'int', 'x', 'int', 'y', 'int', 'w', 'int', 'h'], 1, dataAsm, false, 0);
 	dataAsm = [];
 	dataAsm.push('_setparticle: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n SPART R1 \n RET');
+	dataAsm.push(' ');
 	registerFunction('setparticle', 'void', ['int', 'gravity', 'int', 'count', 'int', 'time'], 1, dataAsm, false, 0);
 	dataAsm = [];
 	dataAsm.push('_setemitter: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n SEMIT R1 \n RET');
+	dataAsm.push(' ');
 	registerFunction('setemitter', 'void', ['int', 'time', 'int', 'dir', 'int', 'dir1', 'int', 'speed'], 1, dataAsm, false, 0);
 	dataAsm = [];
 	dataAsm.push('_drawparticle: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n DPART R1 \n RET');
+	dataAsm.push(' ');
 	registerFunction('drawparticle', 'void', ['int', 'x', 'int', 'y', 'char', 'color'], 1, dataAsm, false, 0);
 	dataAsm = [];
 	dataAsm.push('_loadtile: \n MOV R1,R0 \n LDC R2,2 \n ADD R1,R2 \n LDTILE R1 \n RET');
+	dataAsm.push(' ');
 	registerFunction('loadtile', 'void', ['int', 'a', 'int', 'imgwidth', 'int', 'imgheight', 'int', 'width', 'int', 'height'], 1, dataAsm, false, 0);
 	dataAsm = [];
 	dataAsm.push('_printf: \n MOV R2,R0 \n ADD R2,R1 \n LDI R2,(R2) \n LDC R3,(R2) \nnext_printf_c:')
@@ -1849,6 +1872,7 @@ function compile(t) {
 	dataAsm.push('_free:\n LDI R1,(2 + R0)\n DEC R1,2\n LDI R3,32768\n LDI R2,(R1)\n SUB R2,R3\n LDI R4,(R1+R2)\n CMP R4,0\n JZ end_free_0');
 	dataAsm.push(' CMP R3,R4\n JP next_free\n STI (R1),R2\n RET \nend_free_0:\n LDI R2,0\n STI (R1),R2\n RET\nnext_free:\n ADD R2,R4');
 	dataAsm.push(' LDI R4,(R1+R2)\n CMP R4,0\n JZ end_free_0\n CMP R3,R4\n JP next_free\n STI (R1),R2 \n RET');
+	dataAsm.push(' ');
 	registerFunction('free', 'void', ['int', 'a'], 1, dataAsm, false, 0);
 	dataAsm = [];
 	dataAsm.push('\n_malloc: \n LDI R2,(2 + R0)\n CMP R2,0 \n JZ end_malloc \n  MOV R5,R2\n LDC R4,1\n AND R5,R4\n CMP R5,1\n JNZ next_malloc');
@@ -1857,17 +1881,19 @@ function compile(t) {
 	dataAsm.push(' MOV R5,R2\n ADD R5,R1\n CMP R5,R0 \n JP end_malloc\n ADD R2,R4\n STI (R1),R2\n INC R1,2\n RET\nmalloc2: \n MOV R6,R3');
 	dataAsm.push(' SUB R6,R2\n JNP next_byte1 \n MOV R5,R2\n ADD R5,R1\n CMP R5,R0\n JP end_malloc\n ADD R2,R4\n STI (R1),R2\n INC R1,2');
 	dataAsm.push(' CMP R6,0 \n JZ ret_malloc\n STI (R5),R6\n RET\n next_byte1: \n ADD R1,R3 \n JMP next_byte \nend_malloc:\n LDC R1,0\n RET');
+	dataAsm.push(' ');
 	dataAsm.push('ret_malloc:\n RET');
+	dataAsm.push(' ');
 	registerFunction('malloc', 'int', ['int', 'l'], 1, dataAsm, false, 0);
 	dataAsm = [];
-	//основной цикл компиляции, выполняется пока есть токены на входе
+	//main compilation cycle, executed while there are tokens in the input
 	while (getToken()) {
 		execut();
 	}
-	//указываем место для кучи, если нужно
+	//specify the place for the heap, if necessary
 	if (isFunction('malloc'))
 		asm.push(' LDI R15,0 \n STI (#END),R15');
-	//в конце программы вызываем main если есть
+	//at the end of the program, call main if there is one
 	if (isFunction('main')) {
 		for (var i = 0; i < functionTable.length; i++) {
 			if (functionTable[i].name == 'main') {
@@ -1882,20 +1908,21 @@ function compile(t) {
 		}
 		asm.push(' CALL _main');
 	}
-	//если ее нет, то программа будет работать все равно
+	//if not, then the program will work anyway
 	else
 		putError(lineCount, 21, '');
-	//info("не найдена точка входа в функцию main");
-	//при возврате из main останавливаем выполнение программы
+	//info ("the entry point to the main function was not found");
+	//when returning from main, we stop the program
 	asm.push('HLT');
-	//проверяем, были ли хоть раз вызваны функции и добовляем код только вызванных
+	asm.push(' ');
+	//check if the functions were called at least once and add the code of only those called
 	for (var i = 0; i < functionTable.length; i++) {
 		if (functionTable[i].use > 0)
 			asm = asm.concat(functionTable[i].asm);
 	}
-	//объеденяем код с данными
+	//combine the code with the data
 	asm = asm.concat(dataAsm);
 	console.timeEnd("compile");
-	
+
 	return asm;
 }

@@ -5,19 +5,19 @@ var alertArea = document.getElementById("alert");
 var debugArea = document.getElementById("debug");
 var debugVarArea = document.getElementById("debugVariable");
 var debugSprArea = document.getElementById("debugSprite");
-var memoryPage = 0; //указывает на одну из 255 страниц памяти по 255 байт для отображения
-var cpuSpeed = 8000; //количество операций, выполняемых процессором за 16 миллисекунд
-var cpuLostCycle = 0; //сколько циклов должно быть потеряно из-за операций рисования
-var timerId; //таймер для вызова выполнения процессора
-var asmSource; //код, полученный при компиляции
-var debugVar = []; //таблица данных о именах и расположении в памяти переменных
-var numberDebugString = []; //таблица, указывающая соответствие строк кода исполняемым инструкциям
-var numberLine = 0; //количество линий исходного кода
-var thisDebugString = 0; //строка, которая в данный момент выполняется процессором
-var globalJKey = 0; //массив кнопок геймпада
-var globalKey = 0; //текущая нажатая на клавиатуре кнопка
-var obj_wind; //переменные, используемые для перемещения окон
-var soundTimer = 100; //время проигрывания ноты
+var memoryPage = 0; //points to one of 255 pages of memory each of 256 bytes to display
+var cpuSpeed = 8000; //no of operations in 16ms
+var cpuLostCycle = 0; //how many cycles should be lost due to drawing operations
+var timerId; //timer to call processor execution
+var asmSource; //compiled code
+var debugVar = []; //table of data on names and location of variables in memory
+var numberDebugString = []; //table showing the correspondence of lines of code to executable instructions
+var numberLine = 0; //number of lines of source code
+var thisDebugString = 0; //the string that is currently being executed by the processor
+var globalJKey = 0; //an array of gamepad buttons
+var globalKey = 0; //current button pressed on the keyboard
+var obj_wind; //variables used to move windows
+var soundTimer = 100; //note playing time
 var obj_drag_wind;
 var delta_x = 0;
 var delta_y = 0;
@@ -59,6 +59,8 @@ input.onclick = input.onkeydown = input.onkeyup = input.onkeypress = input.oncut
 		});
 	}
 })();
+
+viewCanvas();
 
 function saveIco(a){
 	var i = 0;
@@ -166,8 +168,19 @@ function motion_wind(obj_event) {
 		x = window.event.clientX;
 		y = window.event.clientY;
 	}
-	obj_wind.style.top = (delta_y + y) + "px";
-	obj_wind.style.left = (delta_x + x) + "px";
+
+	if (delta_y + y < 5) {
+		obj_wind.style.top = 5 + "px";
+	} else {
+		obj_wind.style.top = (delta_y + y) + "px";
+	}
+
+	if (delta_x + x < 5) {
+		obj_wind.style.left = 5 + "px";
+	} else {
+		obj_wind.style.left = (delta_x + x) + "px";
+	}
+
 	window.getSelection().removeAllRanges();
 }
 
@@ -246,10 +259,10 @@ function keyUpHandler(e) {
 }
 
 function highliteasm(code) {
-	//подсветка от etcdema
-	var comments = []; // Тут собираем все каменты
-	var strings = []; // Тут собираем все строки
-	var res = []; // Тут собираем все RegExp
+	//etcdema backlight
+	var comments = []; //collect all the comments
+	var strings = []; //collect all the lines
+	var res = []; //collect all RegExp
 	var all = {
 		'C': comments,
 		'S': strings,
@@ -262,38 +275,38 @@ function highliteasm(code) {
 	};
 
 	return code
-	// Убираем каменты
+	//Remove comments
 	.replace(/([^;]);[^\n]*/g, function (m, f) {
 		var l = comments.length;
 		comments.push(m);
 		return f + '~~~C' + l + '~~~';
 	})
-	// Убираем строки
+	//remove the lines
 	.replace(/([^\\])((?:'(?:\\'|[^'])*')|(?:"(?:\\"|[^"])*"))/g, function (m, f, s) {
 		var l = strings.length;
 		strings.push(s);
 		return f + '~~~S' + l + '~~~';
 	})
-	// Выделяем ключевые слова
+	//select keywords
 	.replace(/(mov|ldi|ldial|ldc|sti|stial|stc|pop|popn|push|pushn|jmp|jz|jnz|jc|jnc|call|ret|add|and|sub|mul|div|cmp|inc|dec|ldf|hlt)([^a-z0-9\$_])/gi,
 		'<span class="kwrd">$1</span>$2')
-	// Выделяем скобки
+	//select brackets
 	.replace(/(\(|\))/gi,
 		'<span class="gly">$1</span>')
-	// Возвращаем на место каменты, строки
+	//return to the place of comments, lines
 	.replace(/~~~([CSR])(\d+)~~~/g, function (m, t, i) {
 		return '<span class="' + t + '">' + all[t][i] + '</span>';
 	})
-	// Выставляем переводы строк
+	//expose line feeds
 	.replace(/\n/g, '<br/>')
 }
 
 function highlitec() {
-	//подсветка от etcdema
+	//etcdema backlight
 	var code = document.getElementById("help_hl").innerHTML;
-	var comments = []; // Тут собираем все каменты
-	var strings = []; // Тут собираем все строки
-	var res = []; // Тут собираем все RegExp
+	var comments = []; //collect all the comments
+	var strings = []; //collect all the lines
+	var res = []; //collect all RegExp
 	var all = {
 		'C': comments,
 		'S': strings,
@@ -306,36 +319,36 @@ function highlitec() {
 	};
 
 	document.getElementById("help_hl").innerHTML = code
-		// Убираем каменты
+		//remove comments
 		.replace(/([^\/])\/\/[^\n]*/g, function (m, f) {
 			var l = comments.length;
 			comments.push(m);
 			return f + '~~~C' + l + '~~~';
 		})
-		// Убираем строки
+		//remove lines
 		.replace(/()(\/\*[\S\s]*?\*\/)/g, function (m, f, s) {
 			var l = strings.length;
 			strings.push(s);
 			return f + '~~~S' + l + '~~~';
 		})
-		// Выделяем ключевые слова
+		//select keywords
 		.replace(/(int|char|void)([^a-z0-9\$_])/gi,
 			'<span class="kwrd">$1</span>$2')
-		// Выделяем скобки
+		//select brackets
 		.replace(/(\(|\))/gi,
 			'<span class="gly">$1</span>')
-		// Возвращаем на место каменты, строки
+		//return to comments, lines
 		.replace(/~~~([CSR])(\d+)~~~/g, function (m, t, i) {
 			return '<span class="' + t + '">' + all[t][i] + '</span>';
 		})
-		// Выставляем переводы строк
+		//expose line feeds
 		.replace(/\n/g, '<br/>')
 		.replace(/\t/g, '');
 }
 
 highlitec();
 
-//компиляция ассемблерного кода из поля ввода
+//compiling assembler code from input field
 function onlyAsm() {
 	var s = document.getElementById('input').value;
 	var n = s.split('\n').length;
@@ -345,7 +358,7 @@ function onlyAsm() {
 	file = asm(s);
 	document.getElementById('ram').value = toHexA(file);
 }
-//компиляция си кода из поля ввода
+//compilation of si code from input field
 function main() {
 	rtttl.play = 0;
 	document.getElementById("alert").innerHTML = '';
@@ -359,7 +372,7 @@ function main() {
 	document.getElementById('disasm').innerHTML = highliteasm(asmSource);
 	document.getElementById('ram').value = toHexA(file);
 }
-//вывод информации о ходе сборки
+//display information about the assembly
 function info(s) {
 	var out = document.getElementById("alert");
 	out.innerHTML += '<b>' + s + '</b><br>';
@@ -395,7 +408,7 @@ function lineCount() {
 	document.getElementById('line-count').style.height = i * 1.15 + 'em';
 	sourceArea.focus();
 }
-//подсветка текущей строки, выполняемой процессором
+//processor current line highlighting
 function highliteLine() {
 	var countStr = '';
 	for (var i = 0; i <= numberLine; i++) {
@@ -408,14 +421,14 @@ function highliteLine() {
 }
 
 function inputOnKey(e) {
-	if (e.keyCode === 9) { // была нажата клавиша TAB
+	if (e.keyCode === 9) { //TAB key was pressed
 		if (e.type == 'keyup')
 			return false;
-		// получим позицию каретки
+		//get carriage position
 		var val = this.value,
 		start = this.selectionStart,
 		end = this.selectionEnd;
-		// установим значение textarea в: текст до каретки + tab + текст после каретки
+		//set textarea to: text before caret + tab + text after caret
 		var txt = val.substring(start, end);
 		if (e.shiftKey) {
 			txt = txt.replace(/\n\s/g, '\n');
@@ -427,7 +440,7 @@ function inputOnKey(e) {
 		} else {
 			if (txt.length == 0) {
 				this.value = val.substring(0, start) + '\t' + val.substring(end);
-				// переместим каретку
+				//move the carriage
 				this.selectionStart = start + 1;
 				this.selectionEnd = start + 1;
 			} else {
@@ -439,12 +452,12 @@ function inputOnKey(e) {
 
 		}
 		setTimeout(lineCount, 300);
-		// предотвратим потерю фокуса
+		//prevent loss of focus
 		return false;
 	} else if (e.keyCode === 13) {
 		if (e.type == 'keyup')
 			return false;
-		// получим позицию каретки
+		//get the position of the carriage
 		var val = this.value,
 		start = this.selectionStart,
 		end = this.selectionEnd;
@@ -469,7 +482,7 @@ function inputOnKey(e) {
 		var txt = '';
 		for (var i = 0; i < tb; i++)
 			txt += '\t';
-		// переместим каретку
+		//move the carriage
 		this.value = val.substring(0, start) + '\n' + txt + val.substring(end);
 		this.selectionStart = start + txt.length + 1;
 		this.selectionEnd = start + txt.length + 1;
@@ -478,7 +491,7 @@ function inputOnKey(e) {
 	} else if (e.keyCode === 125) {
 		if (e.type == 'keyup')
 			return false;
-		// получим позицию каретки
+		//get the position of the carriage
 		var val = this.value,
 		start = this.selectionStart,
 		end = this.selectionEnd;
@@ -526,6 +539,14 @@ function viewSettings() {
 	loadSettings();
 }
 
+function viewCanvas() {
+	var d = document.getElementById("div_wind6");
+	d.style.display = "block";
+	d.style.left = window.innerWidth / 5 * 4 + 'px';
+	d.style.top = "3em";
+//	loadSettings();
+}
+
 function closewindow(id) {
 	var d = document.getElementById(id);
 	if (id == "div_wind3")
@@ -569,9 +590,9 @@ function setMemoryPage(n) {
 }
 
 function run() {
-	//звук инициализируется только при нажатии на кнопку
+	//sound is initialized only when the button is pressed
 	initAudio();
-	//уменьшаем значение таймеров
+	//decrease the value of timers
 	for (var i = 0; i < 8; i++) {
 		timers[i] -= 16;
 		if (timers[i] <= 0)
@@ -582,19 +603,19 @@ function run() {
 		soundTimer = playRtttl();
 	if (soundTimer > 2000)
 		soundTimer = 2000;
-	//обрабатываем команды процессора
+	//process processor instructions
 	for (var i = 0; i < cpuSpeed; i++) {
 		cpu.step();
 		i += cpuLostCycle;
 		cpuLostCycle = 0;
 	}
-	//обработка спрайтов
+	//sprite processing
 	if (isRedraw) {
 		display.clearSprite();
 		cpu.redrawSprite();
 		cpu.testSpriteCollision(isDebug);
 		isRedraw = false;
-		//выводим отладочную информацию
+		//display debugging information
 		debugCallCount++;
 		if (debugCallCount >= 10) {
 			document.getElementById('debug').value = cpu.debug();
@@ -608,7 +629,7 @@ function run() {
 			run()
 		}, 16 - diff);
 }
-//функция вывода на экран
+//screen output function
 function Display() {
 	var displayArray = [];
 	var spriteArray = [];
@@ -618,7 +639,9 @@ function Display() {
 	var width;
 	var height;
 	var pixelSize = 2;
-	var canvas = document.getElementById("screen");
+
+// SH
+	var canvas = document.getElementById("screen1");
 	var isDebug = false;
 	var isDrawKeyboard = false;
 	var isChangePalette = false;
@@ -654,12 +677,14 @@ function Display() {
 
 	function position(e) {
 		var rect = canvas.getBoundingClientRect();
-		var x = Math.floor((e.offsetX == undefined ? e.layerX : e.offsetX) / (rect.width / 128));
-		var y = Math.floor((e.offsetY == undefined ? e.layerY : e.offsetY) / (rect.height / 160)) - 16;
+// SH
+		var x = Math.floor((e.offsetX == undefined ? e.layerX : e.offsetX) / (rect.width / iW));
+		var y = Math.floor((e.offsetY == undefined ? e.layerY : e.offsetY) / (rect.height / (iH + 32))) - 16;
 		ctx.fillStyle = "black";
-		ctx.fillRect(0, 0, pixelSize * 128, pixelSize * 16);
+//SH - iX?
+		ctx.fillRect(iX2, 0, pixelSize * (iW - iX), pixelSize * 16);
 		ctx.fillStyle = "white";
-		ctx.fillText("x " + x + "; y " + y, 1, 1);
+		ctx.fillText("x " + x + "; y " + y, iX + 1, 1);
 	}
 
 	function reset() {
@@ -667,17 +692,21 @@ function Display() {
 		ctx.textBaseline = "hanging";
 		ctx.font = pixelSize * 8 + "px monospace";
 		ctx.fillStyle = "black";
+// SH - iX?
 		ctx.fillRect(0, 0, width + 20, height + 20);
-		for (var i = 0; i < 20480; i++) {
+// SH
+		for (var i = 0; i < ((iW - iX) * (iH + 32)); i++) {
 			displayArray[i] = 0;
 			canvasArray[i] = 0;
 			canvasArray2[i] = 0;
 		}
 		cpuLostCycle += 2000;
 		ctx.fillStyle = "black";
-		ctx.fillRect(0, (128 + 16) * pixelSize, pixelSize * 128, pixelSize * 16);
+// SH - iX?
+		ctx.fillRect(iX2, (iH + 16) * pixelSize, pixelSize * (iW - iX), pixelSize * 16);
 		ctx.fillStyle = "white";
-		ctx.fillText("KEY_A - z, KEY_B - space", 1, (128 + 17) * pixelSize);
+		ctx.fillText("KEY_A - z, KEY_B - space", iX + 1, (iH + 17) * pixelSize);
+
 		for (var i = 0; i < 16; i++) {
 			palette[i] = bpalette[i];
 			sprtpalette[i] = bpalette[i];
@@ -687,14 +716,16 @@ function Display() {
 	function clearScreen(color) {
 		if (color === undefined || color === null)
 			color = 0;
-		for (var i = 0; i < 20480; i++) {
+// SH
+		for (var i = 0; i < ((iW - iX) * (iH + 32)); i++) {
 			displayArray[i] = color;
 			canvasArray[i] = color;
 		}
 	}
 
 	function clearSprite() {
-		for (var i = 0; i < 20480; i++) {
+// SH
+		for (var i = 0; i < ((iW - iX) * (iH + 32)); i++) {
 			spriteArray[i] = 0;
 		}
 	}
@@ -704,8 +735,9 @@ function Display() {
 		var g = ((((color >> 5) & 0x3F) * 259) + 33) >> 6;
 		var b = (((color & 0x1F) * 527) + 23) >> 6;
 		ctx.fillStyle = fullColorHex(r, g, b);
-		ctx.fillRect(0, 0, pixelSize * 128, pixelSize * 16);
-		ctx.fillRect(0, (128 + 16) * pixelSize, pixelSize * 128, pixelSize * 16);
+// SH - iX?
+		ctx.fillRect(iX2 * pixelSize, 0, pixelSize * (iW - iX), pixelSize * 16);
+		ctx.fillRect(iX2 * pixelSize, (iH + 16) * pixelSize, pixelSize * (iW - iX), pixelSize * 16);
 	}
 
 	function char(chr, x, y, color, bgcolor) {
@@ -727,47 +759,53 @@ function Display() {
 		else
 			ctx.strokeStyle = "red";
 		ctx.beginPath();
-		ctx.rect(x * pixelSize, (y + 16) * pixelSize, w * pixelSize, h * pixelSize);
+// SH - iX?
+		ctx.rect((iX2 + x) * pixelSize, (y + 16) * pixelSize, w * pixelSize, h * pixelSize);
 		ctx.stroke();
 		isDebug = true;
 	}
 
 	function updatePixel(x, y) {
-		canvasArray[x * 128 + y] = displayArray[x * 128 + y];
-
+// SH
+		canvasArray[x * (iW - iX) + y] = displayArray[x * (iW - iX) + y];
 	}
 
 	function drawPixel(color, x, y) {
 		cpuLostCycle += 1;
-		if (x >= 0 && x < 128 && y >= 0 && y < 128)
-			canvasArray[x * 128 + y] = color;
+// SH
+		if (x >= 0 && x < (iW - iX) && y >= 0 && y < iH)
+			canvasArray[x * (iW - iX) + y] = color;
 	}
 
 	function drawSpritePixel(color, x, y) {
-		if (x >= 0 && x < 128 && y >= 0 && y < 128)
-			spriteArray[x * 128 + y] = color;
+// SH
+		if (x >= 0 && x < (iW - iX) && y >= 0 && y < iH)
+			spriteArray[x * (iW - iX) + y] = color;
 	}
 
 	function plot(color, x, y) {
-		if (x >= 0 && x < 128 && y >= 0 && y < 128) {
+// SH
+		if (x >= 0 && x < (iW - iX) && y >= 0 && y < iH) {
 			drawPixel(color, x, y);
-			displayArray[x * 128 + y] = color & 0x0f;
+			displayArray[x * (iW - iX) + y] = color & 0x0f;
 		}
 	}
 
 	function largeplot(color, x, y, s) {
-		var x1,
-		y1;
+		var x1, y1;
 		for (x1 = 0; x1 < s; x1++)
 			for (y1 = 0; y1 < s; y1++) {
 				drawPixel(color, x + x1, y + y1);
-				displayArray[(x + x1) * 128 + y + y1] = color & 0x0f;
+// SH
+				displayArray[(x + x1) * (iW - iX) + y + y1] = color & 0x0f;
 			}
 	}
 
 	function getPixel(x, y) {
-		if (x >= 0 && x <= 127 && y >= 0 && y <= 127)
-			return displayArray[x * 128 + y];
+// SH
+		if (x >= 0 && x <= (iW - iX) - 1 && y >= 0 && y <= iH - 1)
+			return displayArray[x * (iW - iX) + y];
+
 		return 0;
 	}
 
@@ -782,56 +820,61 @@ function Display() {
 		var adr = 0;
 		var px = keyboardPos % 21;
 		var py = Math.floor(keyboardPos / 21);
-		for (var y = 0; y < 24; y++)
-			for (var x = 0; x < 128; x++) {
+		for (var y = 0; y < 24; y++) {
+// SH
+			for (var x = 0; x < (iW - iX); x++) {
 				if (i % 8 == 0) {
 					bit = keyboardImage[adr];
 					adr++;
 				}
-				if (bit & 0x80)
-					drawSpritePixel(11, x, 104 + y);
+				if (bit & (iW - iX))
+					drawSpritePixel(11, x, iH - 24 + y);
 				else {
 					if (Math.floor(y / 8) == py && Math.floor(x / 6) == px)
-						drawSpritePixel(10, x, 104 + y);
+						drawSpritePixel(10, x, iH - 24 + y);
 					else
-						drawSpritePixel(1, x, 104 + y);
+						drawSpritePixel(1, x, iH - 24 + y);
 				}
 				bit = bit << 1;
 				i++;
 			}
+		}
 	}
 
 	function redraw() {
-		var color,
-		x,
-		y;
+		var color, x, y;
 		if (isDrawKeyboard) {
 			drawKeyboard();
 			isDrawKeyboard = 0;
 		}
-		for (x = 0; x < 128; x++)
-			for (y = 0; y < 128; y++) {
-				if (spriteArray[x * 128 + y] > 0) {
-					color = spriteArray[x * 128 + y];
-					canvasArray2[x * 128 + y] = color;
+// SH
+		for (x = 0; x < (iW - iX); x++) {
+			for (y = 0; y < iH; y++) {
+				if (spriteArray[x * (iW - iX) + y] > 0) {
+					color = spriteArray[x * (iW - iX) + y];
+					canvasArray2[x * (iW - iX) + y] = color;
 					ctx.fillStyle = sprtpalette[color & 0x0f];
-					ctx.fillRect(x * pixelSize, (y + 16) * pixelSize, pixelSize, pixelSize);
-				} else if (canvasArray[x * 128 + y] != canvasArray2[x * 128 + y] || isDebug || isChangePalette) {
-					canvasArray2[x * 128 + y] = canvasArray[x * 128 + y];
-					color = canvasArray[x * 128 + y];
+					ctx.fillRect((iX2 + x) * pixelSize, (y + 16) * pixelSize, pixelSize, pixelSize);
+				} else if (canvasArray[x * (iW - iX) + y] != canvasArray2[x * (iW - iX) + y] || isDebug || isChangePalette) {
+					canvasArray2[x * (iW - iX) + y] = canvasArray[x * (iW - iX) + y];
+					color = canvasArray[x * (iW - iX) + y];
 					ctx.fillStyle = palette[color & 0x0f];
-					ctx.fillRect(x * pixelSize, (y + 16) * pixelSize, pixelSize, pixelSize);
+					ctx.fillRect((iX2 + x) * pixelSize, (y + 16) * pixelSize, pixelSize, pixelSize);
 				}
 			}
+		}
+
 		isDebug = false;
 		isChangePalette = false;
 	}
 
 	function rgbToHex(rgb) {
 		var hex = Number(rgb).toString(16);
+
 		if (hex.length < 2) {
 			hex = "0" + hex;
 		}
+
 		return hex;
 	}
 

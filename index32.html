@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<title>esp8266gameEngine</title>
+<title>esp32gameEngine</title>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -34,11 +34,11 @@
 					<button onclick="setMemoryPage('p')">+</button>
 					<textarea id="areaMemoryPrewiew" disabled="disabled"></textarea>
 				</div>
-				<canvas id="screen" width="256" height="320"></canvas>
+
 				<button onclick="cpu.step();document.getElementById('debug').value = cpu.debug();clearTimeout(timerId);">step</button>
 				<button onclick="timerstart = new Date().getTime();timertime = 0;soundTimer = 0;run();">run</button>
 				<button onclick="clearTimeout(timerId);document.getElementById('debug').value = cpu.debug();">stop</button>
-				<br>
+
 				cpu speed,Hz
 				<select id="cpuSpeed" name="cpuSpeed" onchange="cpuSpeed=this.value">
 					<option selected value="8000">500 000</option>
@@ -122,21 +122,21 @@ void main(){
 				<input name="pixeled" type="radio" value="2" onchange="spriteEditor.setType(1)" id="check2"><label for="check2">&#127778;</label>
 			</div>
 			<button onclick="spriteEditor.clear();">cls</button>
-			<button onclick = "spriteEditor.scroll(0);" style = "width: 1.8em;">&#8594</button>
-			<button onclick = "spriteEditor.scroll(1);" style = "width: 1.8em;">&#8593</button> 
-			<button onclick = "spriteEditor.scroll(2);" style = "width: 1.8em;">&#8592</button>
-			<button onclick = "spriteEditor.scroll(3);" style = "width: 1.8em;">&#8595</button>
+			<button onclick = "spriteEditor.scroll(0);" style = "width: 1.8em;">&#8594;</button>
+			<button onclick = "spriteEditor.scroll(1);" style = "width: 1.8em;">&#8593;</button> 
+			<button onclick = "spriteEditor.scroll(2);" style = "width: 1.8em;">&#8592;</button>
+			<button onclick = "spriteEditor.scroll(3);" style = "width: 1.8em;">&#8595;</button>
 			<input type="checkbox" id="check1bit" onclick="spriteEditor.set1bit(this.checked)">
 			<label for="check1bit" id="check1bitLabel">1 BIT</label>
 			<input type="checkbox" id="checkRle" onclick="spriteEditor.setRle(this.checked)">
 			<label for="checkRle" id="checkRleLabel">RLE 100%</label>
 			<b id="selectColor">[]</b>
 			<b id="spriteInfo"></b>
-			<input style="width:5em" id="r5g6b5HEXinput">
+			<input style="width:5em;" id="r5g6b5HEXinput">
 			<input type="range" min="0" max="31" step="1" value="1" id="r5g6b5Rinput" onchange="spriteEditor.changePaletteColor()"> 
 			<input type="range" min="0" max="63" step="1" value="1" id="r5g6b5Ginput" onchange="spriteEditor.changePaletteColor()"> 
 			<input type="range" min="0" max="31" step="1" value="1" id="r5g6b5Binput" onchange="spriteEditor.changePaletteColor()"> 
-			<button onclick = "spriteEditor.backColor()" style = "width: 1.8em;">&#8617</button>
+			<button onclick = "spriteEditor.backColor()" style = "width: 1.8em;">&#8617;</button>
 			<textarea id="spriteArea" onclick = "spriteEditor.selectAll();">{0,0,0}</textarea>
 		</div>
         </div>
@@ -273,6 +273,18 @@ void main(){
 				onclick="saveSettings()">ok</button>
         </div>
     </div>
+<!-- SH -->
+	<div id="div_wind6" class="div_wind">
+        <div id="drag_wind6" class="div_drag_wind" onmouseover="setup_mouse('div_wind6', 'drag_wind6');">
+            <div>
+               Screen
+            </div>
+        </div>
+        <div class="content_wind">
+			<canvas id="screen1" width="640" height="544"></canvas>
+        </div>
+    </div>
+<!-- SH -->
 	<a href="https://github.com/corax89/game_engine_for_esp8266_with_compiler" class="github-corner" aria-label="View source on GitHub">
 		<svg width="65" height="65" viewBox="0 0 250 250" style="fill:#516399; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true">
 			<path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>

@@ -8,42 +8,45 @@ char laser[] = {0x72,0x7a,0xa2,0x7a,0xa2,0x72,0x7a,0xa2,0x7a,0xa2,0x72};
 char block[] = {0x99,0x99,0x99,0x99,0x1e,0x1e,0xce,0xc9,0x1e,0xce,0xce,0x99,0x1c,0x1c,0xc9,0xc9,0x1e,0xce,0xce,0x99,0x1e,0x1e,0xce,0xc9,0x11,0xcc,0xcc,0x99,0x1c,0x1c,0xc9,0xc9};
 //8x8rle
 char earth[] = {0x4,0x88,0x4,0xa8,0x4,0x8a,0x4,0xa8,0x10,0xaa};
-char map[60];
+char map[116];
 
 char cadr = 0;
-int key,game,i,j,r,ok,count,speed;
+int key, game, i, j, r, ok, count, speed;
 
 void init();
 
-void end(){
+void end() {
 	speed = 1;
-	spritesetvalue(31,S_SPEEDY,-1);
+	spritesetvalue(31, S_SPEEDY, -1);
 	settimer(0, 1000);
-	while(gettimer(0)){}
+
+	while (gettimer(0)) {
+	}
 }
 
-void vin(){
+void vin() {
 	speed++;
 	init();
 }
 
-void ufoExit(){
-	spritesetvalue(31,S_X,-14);
-	spritesetvalue(31,S_Y,spritegetvalue(31,S_Y) + 4);
-	if(spritegetvalue(31,S_Y) > 120)
+void ufoExit() {
+	spritesetvalue(31, S_X, -14);
+	spritesetvalue(31, S_Y,spritegetvalue(31, S_Y) + 4);
+
+	if (spritegetvalue(31, S_Y) > 232)
 		game = 0;
 }
 
-void ufoCollision(){
+void ufoCollision() {
 	game = 0;
-	spritesetvalue(spritegetvalue(31, S_COLLISION), S_SPEEDY, 1);
+	spritesetvalue(spritegetvalue(31,  S_COLLISION), S_SPEEDY, 1);
 }
 
-void laserExit(){
-	spritesetvalue(30,S_LIVES,0);
+void laserExit() {
+	spritesetvalue(30, S_LIVES, 0);
 }
 
-void laserCollision(){
+void laserCollision() {
 	i = spritegetvalue(30, S_COLLISION);
 	spritesetvalue(i, S_LIVES, 0);
 	spritesetvalue(30, S_LIVES, 0);
@@ -51,76 +54,87 @@ void laserCollision(){
 	count--;
 }
 
-void init(){
-	gotoxy(1,1);
+void init() {
+	gotoxy(1, 1);
 	game = 1;
 	printf("level %d   ", speed - 2);
 	count = 28;
-	for(i = 0; i < 60; i++)
+
+	for (i = 0; i < 116; i++)
 		map[i] = 0;
-	for(i = 0; i < 28; i++){
+
+	for (i = 0; i < 28; i++) {
 		getsprite(i, block);
-		spritesetvalue(i,S_SOLID,1);
-		spritesetvalue(i,S_SPEEDX,0);
-		spritesetvalue(i,S_SPEEDY,0);
+		spritesetvalue(i, S_SOLID, 1);
+		spritesetvalue(i, S_SPEEDX, 0);
+		spritesetvalue(i, S_SPEEDY, 0);
 		ok = 0;
-		while(ok == 0){
-			r = random(11);
-			for(j = 4; j >= 0; j--){
-				if(map[j * 12 + r] == 0){
+
+		while (ok == 0) {
+			r = random(23);
+
+			for (j = 4; j >= 0; j--) {
+				if (map[j * 12 + r] == 0) {
 					ok = 1;
 					map[j * 12 + r] = 1;
-					putsprite(i, r * 10, j * 8 + 80);
+					putsprite(i, r * 10, j * 8 + 192);
 					j = 0;
 				}
 			}
 		}
 	}
+
 	getsprite(30, laser);
-	spritesetvalue(30,S_WIDTH,2);
-	spritesetvalue(30,S_HEIGHT,11);
-	spritesetvalue(30,S_SPEEDY,21);
-	spritesetvalue(30,S_ON_EXIT_SCREEN,laserExit);
-	spritesetvalue(30,S_ON_COLLISION,laserCollision);
+	spritesetvalue(30, S_WIDTH, 2);
+	spritesetvalue(30, S_HEIGHT, 11);
+	spritesetvalue(30, S_SPEEDY, 21);
+	spritesetvalue(30, S_ON_EXIT_SCREEN, laserExit);
+	spritesetvalue(30, S_ON_COLLISION, laserCollision);
 	getsprite(31, ufo[0]);
-	spritesetvalue(31,S_WIDTH,16);
-	spritesetvalue(31,S_HEIGHT,7);
-	spritesetvalue(31,S_SOLID,1);
-	spritesetvalue(31,S_SPEEDX,speed);
-	spritesetvalue(31,S_SPEEDY,0);
-	spritesetvalue(31,S_ON_EXIT_SCREEN,ufoExit);
-	spritesetvalue(31,S_ON_COLLISION,ufoCollision);
+	spritesetvalue(31, S_WIDTH, 16);
+	spritesetvalue(31, S_HEIGHT, 7);
+	spritesetvalue(31, S_SOLID, 1);
+	spritesetvalue(31, S_SPEEDX, speed);
+	spritesetvalue(31, S_SPEEDY, 0);
+	spritesetvalue(31, S_ON_EXIT_SCREEN, ufoExit);
+	spritesetvalue(31, S_ON_COLLISION, ufoCollision);
 	putsprite(31, 1, 8);
 }
 
-void nextcadr(){
-	if(gettimer(0) == 0){
+void nextcadr() {
+	if (gettimer(0) == 0) {
 		settimer(0, 300);
 		cadr = 1 - cadr;
 		getsprite(31, ufo[cadr]);
 	}
 }
 
-void main(){
+void main() {
 	setbgcolor(3);
 	clearscreen();
 	speed = 3;
 	setparticle(2, 10, 500);
 	setemitter(100, 310, 230, 8);
-	for(i = 0; i < 16; i++)
-		putimagerle(earth,i * 8, 120, 8, 8);
-	while(1){
+	for (i = 0; i < 40; i++)
+		putimagerle(earth, i * 8, 232, 8, 8);
+
+	while (1) {
 		init();
-		while(game){		
+
+		while (game) {		
 			key = getkey();
-			if(key == KEY_B){
-				if(spritegetvalue(30,S_LIVES) == 0)
-					putsprite(30, spritegetvalue(31,S_X) + 7, spritegetvalue(31,S_Y) + 8);
+
+			if (key == KEY_B) {
+				if (spritegetvalue(30, S_LIVES) == 0)
+					putsprite(30, spritegetvalue(31, S_X) + 7, spritegetvalue(31, S_Y) + 8);
 			}
+
 			nextcadr();
-			if(count == 0)
+
+			if (count == 0)
 				vin();
 		}
+
 		end();
 	}
-}		
+}

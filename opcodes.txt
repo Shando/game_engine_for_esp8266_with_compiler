@@ -7,7 +7,7 @@ STI (adr),R			06 R0 XXXX
 STI (adr+R),R 		06 RR XXXX
 MOV R,R				07 RR
 LDIAL R,(int+R*2)	08 RR XXXX
-STIAL (adr+R*2),R 	09 RR XXXX
+STIAL (adr+R*2),R	09 RR XXXX
 LDC R,char			1R XX
 LDC R,(R)			20 RR
 LDC R,(R+R)			2R RR
@@ -16,7 +16,7 @@ LDC R,(adr)			31 0R XXXX
 STC (adr),R			32 0R XXXX
 STC (int+R),R		33 RR XXXX
 STC (R),R			40 RR
-STC (R+R),R			4R RR 
+STC (R+R),R			4R RR
 HLT					50 00
 STIMER R,R			51 RR
 GTIMER R			52 0R
@@ -84,8 +84,8 @@ SPRSDS R*2			D4 9R
 LDSPRT R,R			D5 RR
 SPALET R,R			D6 RR
 SPART R 			D7 0R
-SEMIT R				D7 1R 
-DPART R				D7 2R 
+SEMIT R				D7 1R
+DPART R				D7 2R
 DISTSS				D7 3R
 DISTSP				D7 4R
 DISTPP				D7 5R
@@ -94,7 +94,6 @@ GETPIX R,R			D9 RR
 DRTILE R,R			DA RR
 SPRGET R,R			DC RR
 AGBSPR R,R			DE RR
-
 DRSPRT R,R,R		ER RR
 SSPRTV R,R,R		FR RR
 ______________________________

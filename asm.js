@@ -743,7 +743,7 @@ function asm(s) {
 		addDebugInformation(i);
 		parse(arr[i]);
 	}
-	variable.push('#END', variableAdress); //переменная указывает на конец используемой глобальными переменными памяти
+	variable.push('#END', variableAdress); //variable indicates the end of memory used by global variables
 	debugVarStart = out.length;
 	for (var i = 0; i < out.length; i++) {
 		if (typeof out[i] === 'string') {

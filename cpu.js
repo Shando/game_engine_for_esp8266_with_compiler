@@ -1,38 +1,54 @@
 "use strict";
 
 var timers = [];
+// SH
+var sProc = document.title;
+
+var iW = 128;
+var iH = 128
+var iX = 0;
+var iX2 = 0;
+
+sProc = sProc.substring(0,5);
+
+if (sProc === "esp32") {
+	iW = 320;
+	iH = 240;
+	iX = 80;
+	iX2 = iX / 2;
+}
 
 function Cpu() {
-	var mem = []; //память, максимум 65 534 байта
-	var reg = []; //16 регистров, нулевой используется как указатель стека
-	var regx = 0; //неявный регистр, указывает на Х позицию символа в текстовом режиме
-	var regy = 0; //Y позиция символа
-	var imageSize = 1; //влияет на множитель размера выводимой картинки, не относится к спрайтам
-	var pc = 0; //указатель на текущую команду
-	var carry = 0; //флаг переполнения
-	var zero = 0; //флаг нуля
-	var negative = 0; //флаг отрицательности
-	var interrupt = 0; //флаг прерывания
-	var redraw = 0; //флаг, устанавливаемый после перерисовки
-	var sprites = []; //массив адресов и координат спрайтов
-	var particles = []; //массив для частиц
-	var maxParticles = 32; //максимальное количество частиц
-	var emitter = []; //настройки для частиц
-	var tile = []; //настройки для отрисовки тайлов
-	var bgcolor = 0; //фоновый цвет
-	var color = 1; //цвет рисования
-	var charArray = []; //массив символов, выводимых на экран
+	var mem = []; //memory, maximum 65,534 bytes
+	var reg = []; //16 registers, null used as stack pointer
+	var regx = 0; //implicit case, indicates the X position of the character in text mode
+	var regy = 0; //Y symbol position
+	var imageSize = 1; //affects the size factor of the displayed image, does not apply to sprites
+	var pc = 0; //pointer to the current command
+	var carry = 0; //overflow flag
+	var zero = 0; //zero flag
+	var negative = 0; //negative flag
+	var interrupt = 0; //interrupt flag
+	var redraw = 0; //flag, set after redrawing
+	var sprites = []; //array of sprite addresses and coordinates
+	var particles = []; //particle array
+	var maxParticles = 32; //maximum number of particles
+	var emitter = []; //particle settings
+	var tile = []; //settings for drawing tiles
+	var bgcolor = 0; //background colour
+	var color = 1; //foreground colour
+	var charArray = []; //array of characters to display
 	var interruptBuffer = [];
 	var keyPosition = 0;
 	var keyArray = "qwertyuiop[]{}()=789\basdfghjkl:;\"/#$@0456\nzxcvbnm<>?.,!%+*-123 ";
 	var dataName = 0;
-
+	
 	function init() {
 		for (var i = 0; i < 0xffff; i++)
 			mem[i] = 0;
 		for (var i = 1; i < 16; i++)
 			reg[i] = 0;
-		//указываем последнюю ячейку памяти для стека, если памяти меньше то и значение соответственно меняется
+		//specify the last memory cell for the stack, if the memory is less then the value changes accordingly
 		reg[0] = 0xffff;
 		pc = 0;
 		regx = 0;
@@ -41,12 +57,13 @@ function Cpu() {
 		bgcolor = 0;
 		color = 1;
 		interrupt = 0;
-		//задаем начальные координаты спрайтов вне границ экрана
+		//set the initial coordinates of sprites outside the borders of the screen
 		for (var i = 0; i < 32; i++) {
 			sprites[i] = {
 				address: 0,
-				x: 255,
-				y: 255,
+// SH
+				x: (iW - iX) * 2 - 1,
+				y: iH * 2 - 1,
 				speedx: 0,
 				speedy: 0,
 				height: 8,
@@ -60,7 +77,7 @@ function Cpu() {
 				oncollision: 0,
 				onexitscreen: 0,
 				isscrolled: 1,
-				fliphorisontal: 0
+				fliphorizontal: 0
 			};
 		}
 		for (var i = 0; i < maxParticles; i++) {
@@ -102,7 +119,7 @@ function Cpu() {
 		for (var i = 0; i < 8; i++)
 			timers[i] = 0;
 	}
-	//загрузка программы
+	//program download
 	function load(arr) {
 		for (var i = 0; i < arr.length; i++)
 			mem[i] = arr[i];
@@ -173,42 +190,50 @@ function Cpu() {
 		var bufPixel,
 		n;
 		if (direction == 2) {
-			for (var y = 0; y < 128; y++) {
+// SH -- LEFT
+			for (var y = 0; y < iH; y++) {
 				bufPixel = display.getPixel(0, y);
-				for (var x = 1; x < 128; x++)
+				for (var x = 1; x < (iW - iX); x++)
 					display.plot(display.getPixel(x, y), x - 1, y);
-				display.plot(bufPixel, 127, y);
+				display.plot(bufPixel, (iW - iX) - 1, y);
 			}
+
 			for (n = 0; n < 32; n++)
 				if (sprites[n].isscrolled != 0)
 					sprites[n].x -= 4;
 		} else if (direction == 1) {
-			for (var x = 0; x < 128; x++) {
+// SH -- UP
+			for (var x = 0; x < (iW - iX); x++) {
 				bufPixel = display.getPixel(x, 0);
-				for (var y = 1; y < 128; y++)
+				for (var y = 1; y < iH; y++)
 					display.plot(display.getPixel(x, y), x, y - 1);
-				display.plot(bufPixel, x, 127);
+				display.plot(bufPixel, x, iH - 1);
 			}
+
 			for (n = 0; n < 32; n++)
 				if (sprites[n].isscrolled != 0)
 					sprites[n].y -= 4;
 		} else if (direction == 0) {
-			for (var y = 0; y < 128; y++) {
-				bufPixel = display.getPixel(127, y);
-				for (var x = 127; x > 0; x--)
+// SH -- RIGHT
+			for (var y = 0; y < iH; y++) {
+				bufPixel = display.getPixel((iW - iX) - 1, y);
+				for (var x = (iW - iX) - 1; x > 0; x--)
 					display.plot(display.getPixel(x - 1, y), x, y);
 				display.plot(bufPixel, 0, y);
 			}
+
 			for (n = 0; n < 32; n++)
 				if (sprites[n].isscrolled != 0)
 					sprites[n].x += 4;
 		} else {
-			for (var x = 0; x < 128; x++) {
-				bufPixel = display.getPixel(x, 127);
-				for (var y = 127; y > 0; y--)
+// SH -- DOWN
+			for (var x = 0; x < (iW - iX); x++) {
+				bufPixel = display.getPixel(x, iH - 1);
+				for (var y = iH - 1; y > 0; y--)
 					display.plot(display.getPixel(x, y - 1), x, y);
 				display.plot(bufPixel, x, 0);
 			}
+
 			for (n = 0; n < 32; n++)
 				if (sprites[n].isscrolled != 0)
 					sprites[n].y += 4;
@@ -228,10 +253,13 @@ function Cpu() {
 			tile.x -= step;
 			x0 = tile.x;
 			y0 = tile.y;
-			x = Math.floor((127 - x0) / tile.imgwidth);
+// SH
+			x = Math.floor(((iW - iX) - 1 - x0) / tile.imgwidth);
+
 			if (x < tile.width && x >= 0) {
 				for (y = 0; y < tile.height; y++) {
-					if (y0 + y * tile.imgheight > 0 && y0 + y * tile.imgheight < 128) {
+// SH
+					if (y0 + y * tile.imgheight > 0 && y0 + y * tile.imgheight < iH) {
 						imgadr = readInt(tile.adr + (x + y * tile.width) * 2);
 						if (imgadr > 0)
 							drawImage(imgadr, x0 + x * tile.imgwidth, y0 + y * tile.imgheight, tile.imgwidth, tile.imgheight);
@@ -241,18 +269,22 @@ function Cpu() {
 				}
 			} else if (tile.width * tile.imgwidth + x0 >= 0) {
 				y0 = (y0 > 0) ? y0 : 0;
-				y1 = (tile.y + tile.height * tile.imgheight < 128) ? tile.y + tile.height * tile.imgheight - y0 : 127 - y0;
-				if (y0 < 127 && y1 > 0)
-					fillRect(127 - step, y0, step, y1, bgcolor);
+// SH
+				y1 = (tile.y + tile.height * tile.imgheight < iH) ? tile.y + tile.height * tile.imgheight - y0 : iH - 1 - y0;
+				if (y0 < iH - 1 && y1 > 0)
+					fillRect((iW - iX) - 1 - step, y0, step, y1, bgcolor);
 			}
 		} else if (direction == 1) {
 			tile.y -= step;
 			x0 = tile.x;
 			y0 = tile.y;
-			y = Math.floor((127 - y0) / tile.imgheight);
+// SH
+			y = Math.floor((iH - 1 - y0) / tile.imgheight);
+
 			if (y < tile.height && y >= 0)
 				for (x = 0; x < tile.width; x++) {
-					if (x0 + x * tile.imgwidth > 0 && x0 + x * tile.imgwidth < 128) {
+// SH
+					if (x0 + x * tile.imgwidth > 0 && x0 + x * tile.imgwidth < (iW - iX)) {
 						imgadr = readInt(tile.adr + (x + y * tile.width) * 2);
 						if (imgadr > 0)
 							drawImage(imgadr, x0 + x * tile.imgwidth, y0 + y * tile.imgheight, tile.imgwidth, tile.imgheight);
@@ -267,7 +299,8 @@ function Cpu() {
 			x = Math.floor((0 - x0) / tile.imgwidth);
 			if (x0 < 0 && x >= 0) {
 				for (y = 0; y < tile.height; y++) {
-					if (y0 + y * tile.imgheight > 0 && y0 + y * tile.imgheight < 128) {
+// SH
+					if (y0 + y * tile.imgheight > 0 && y0 + y * tile.imgheight < iH) {
 						imgadr = readInt(tile.adr + (x + y * tile.width) * 2);
 						if (imgadr > 0)
 							drawImage(imgadr, x0 + x * tile.imgwidth, y0 + y * tile.imgheight, tile.imgwidth, tile.imgheight);
@@ -275,10 +308,11 @@ function Cpu() {
 							fillRect(x0 + x * tile.imgwidth, y0 + y * tile.imgheight, tile.imgwidth, tile.imgheight, bgcolor);
 					}
 				}
-			} else if (x0 < 128) {
+// SH
+			} else if (x0 < (iW - iX)) {
 				y0 = (y0 > 0) ? y0 : 0;
-				y1 = (tile.y + tile.height * tile.imgheight < 128) ? tile.y + tile.height * tile.imgheight - y0 : 127 - y0;
-				if (y0 < 127 && y1 > 0)
+				y1 = (tile.y + tile.height * tile.imgheight < iH) ? tile.y + tile.height * tile.imgheight - y0 : iH - 1 - y0;
+				if (y0 < iH - 1 && y1 > 0)
 					fillRect(0, y0, step, y1, bgcolor);
 			}
 		} else if (direction == 3) {
@@ -288,7 +322,8 @@ function Cpu() {
 			y = Math.floor((0 - y0) / tile.imgheight);
 			if (y >= 0)
 				for (x = 0; x < tile.width; x++) {
-					if (x0 + x * tile.imgwidth > 0 && x0 + x * tile.imgwidth < 128) {
+// SH
+					if (x0 + x * tile.imgwidth > 0 && x0 + x * tile.imgwidth < (iW - iX)) {
 						imgadr = readInt(tile.adr + (x + y * tile.width) * 2);
 						if (imgadr > 0)
 							drawImage(imgadr, x0 + x * tile.imgwidth, y0 + y * tile.imgheight, tile.imgwidth, tile.imgheight);
@@ -373,7 +408,8 @@ function Cpu() {
 					particles[n].x += Math.floor(particles[n].speedx / 2);
 					particles[n].y += Math.floor(particles[n].speedy / 2);
 				}
-				if (particles[n].x < 0 || particles[n].x > 256 || particles[n].y < 0 || particles[n].y > 256)
+// SH
+				if (particles[n].x < 0 || particles[n].x > (iW - iX + iX2) || particles[n].y < 0 || particles[n].y > iH)
 					particles[n].time = 0;
 			}
 	}
@@ -420,7 +456,7 @@ function Cpu() {
 						for (var x = 0; x < sprites[n].width; x++) {
 							clr = (readMem(adr) & 0xf0) >> 4;
 							if (clr > 0) {
-								if (sprites[n].fliphorisontal)
+								if (sprites[n].fliphorizontal)
 									drawRotateSprPixel(clr, x1, y1, sprites[n].width - x, y, sprites[n].width, sprites[n].height, sprites[n].angle / 57);
 								else
 									drawRotateSprPixel(clr, x1, y1, x, y, sprites[n].width, sprites[n].height, sprites[n].angle / 57);
@@ -428,7 +464,7 @@ function Cpu() {
 							x++;
 							clr = (readMem(adr) & 0xf);
 							if (clr > 0)
-								if (sprites[n].fliphorisontal)
+								if (sprites[n].fliphorizontal)
 									drawRotateSprPixel(clr, x1, y1, sprites[n].width - x, y, sprites[n].width, sprites[n].height, sprites[n].angle / 57);
 								else
 									drawRotateSprPixel(clr, x1, y1, x, y, sprites[n].width, sprites[n].height, sprites[n].angle / 57);
@@ -443,8 +479,9 @@ function Cpu() {
 								ibit = readMem(adr);
 								adr++;
 							}
-							if (ibit & 0x80)
-								if (sprites[n].fliphorisontal)
+// SH -- &
+							if (ibit & (iW - iX))
+								if (sprites[n].fliphorizontal)
 									drawRotateSprPixel(color, x1, y1, sprites[n].width - x, y, sprites[n].width, sprites[n].height, sprites[n].angle / 57);
 								else
 									drawRotateSprPixel(color, x1, y1, x, y, sprites[n].width, sprites[n].height, sprites[n].angle / 57);
@@ -456,8 +493,9 @@ function Cpu() {
 				sprites[n].x += sprites[n].speedx;
 				sprites[n].y += sprites[n].speedy;
 				if (sprites[n].onexitscreen > 0) {
-					if ((sprites[n].x >> 2) + sprites[n].width < 0 || (sprites[n].x >> 2) > 127
-						 || (sprites[n].y >> 2) + sprites[n].height < 0 || (sprites[n].y >> 2) > 127)
+// SH
+					if ((sprites[n].x >> 2) + sprites[n].width < 0 || (sprites[n].x >> 2) > (iW - iX + iX2 - 1)
+						 || (sprites[n].y >> 2) + sprites[n].height < 0 || (sprites[n].y >> 2) > iH - 1)
 						setinterrupt(sprites[n].onexitscreen, n);
 				}
 			}
@@ -668,7 +706,8 @@ function Cpu() {
 		tile.y = y0;
 		for (x = 0; x < tile.width; x++) {
 			for (y = 0; y < tile.height; y++) {
-				if (x0 + x * tile.imgwidth >= -tile.imgwidth && x0 + x * tile.imgwidth < 128 && y0 + y * tile.imgheight >= -tile.imgheight && y0 + y * tile.imgheight < 128) {
+// SH
+				if (x0 + x * tile.imgwidth >= -tile.imgwidth && x0 + x * tile.imgwidth < (iW - iX) && y0 + y * tile.imgheight >= -tile.imgheight && y0 + y * tile.imgheight < iH) {
 					imgadr = readInt(tile.adr + (x + y * tile.width) * 2);
 					if (imgadr > 0)
 						drawImage(imgadr, x0 + x * tile.imgwidth, y0 + y * tile.imgheight, tile.imgwidth, tile.imgheight);
@@ -738,7 +777,7 @@ function Cpu() {
 				}
 			}
 	}
-	//рисование однобитной картинки
+	//drawing a single bit picture
 	function drawImage1bit(adr, x1, y1, w, h) {
 		var size = w * h / 8;
 		var i = 0;
@@ -753,7 +792,8 @@ function Cpu() {
 					bit = readMem(adr);
 					adr++;
 				}
-				if (bit & 0x80)
+// SH -- &
+				if (bit & (iW - iX))
 					display.plot(color, x1 + x, y1 + y);
 				else
 					display.plot(bgcolor, x1 + x, y1 + y);
@@ -761,7 +801,7 @@ function Cpu() {
 				i++;
 			}
 	}
-	//функция рисования картинки, если ее размер отличается от 1
+	//picture drawing function, if its size is different from 1
 	function drawImageS(adr, x1, y1, w, h) {
 		var color,
 		jx,
@@ -849,7 +889,8 @@ function Cpu() {
 					bit = readMem(adr);
 					adr++;
 				}
-				if (bit & 0x80) {
+// SH -- &
+				if (bit & (iW - iX)) {
 					for (jx = 0; jx < s; jx++)
 						for (jy = 0; jy < s; jy++)
 							display.plot(color, x1 + x * s + jx, y1 + y * s + jy);
@@ -925,41 +966,57 @@ function Cpu() {
 	}
 
 	function printc(c, fc, bc) {
+// SH
+		var regXMax = 20; // 128
+		var regYMax = 19; // 128
+		
+		if (sProc === "esp32") {
+			regXMax = 37; // 240 / 128 * 20 ~= 37
+			regYMax = 35; // 240 / 128 * 19 ~= 35
+		}
+
 		if (c == '\n') {
-			for (var i = regx; i <= 20; i++) {
+// SH
+			for (var i = regx; i <= regXMax; i++) {
 				display.char(' ', i * 6, regy * 8, fc, bc);
-				charArray[i + regy * 20] = ' ';
+				charArray[i + regy * regXMax] = ' ';
 			}
 			regy++;
 			regx = 0;
-			if (regy > 19) {
-				regy = 19;
+// SH
+			if (regy > regYMax) {
+				regy = regYMax;
 				charLineUp(1);
 			}
 		} else if (c == '\t') {
 			for (var i = 0; i <= regx % 5; i++) {
 				display.char(' ', regx * 6, regy * 8, fc, bc);
-				charArray[regx + regy * 20] = ' ';
+// SH
+				charArray[regx + regy * regXMax] = ' ';
 				regx++;
-				if (regx > 20) {
+// SH
+				if (regx > regXMax) {
 					i = 99;
 					regy++;
 					regx = 0;
-					if (regy > 19) {
-						regy = 19;
+// SH
+					if (regy > regYMax) {
+						regy = regYMax;
 						charLineUp(1);
 					}
 				}
 			}
 		} else {
 			display.char(c, regx * 6, regy * 8, fc, bc);
-			charArray[regx + regy * 20] = c;
+// SH
+			charArray[regx + regy * regXMax] = c;
 			regx++;
-			if (regx > 20) {
+			if (regx > regXMax) {
 				regy++;
 				regx = 0;
-				if (regy > 19) {
-					regy = 19;
+// SH
+				if (regy > regYMax) {
+					regy = regYMax;
 					charLineUp(1);
 				}
 			}
@@ -983,11 +1040,11 @@ function Cpu() {
 			y2 = y2 - 0x10000;
 		return Math.floor(Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)));
 	}
-	
+
 	function setDataName(address){
 		dataName = address;
 	}
-	
+
 	function saveData(arrayAddress, count){
 		var name, array, i;
 		if(dataName > 0){
@@ -1008,7 +1065,7 @@ function Cpu() {
 		localStorage[name] = array;
 		return count;
 	}
-	
+
 	function loadData(arrayAddress){
 		var name, array, i;
 		if(dataName > 0){
@@ -1021,9 +1078,9 @@ function Cpu() {
 		}
 		else
 			name = 'default';
-		if(localStorage[name]){
+		if (localStorage[name]){
 			array = localStorage[name].split(',');
-			for(i = 0; i < array.length; i++)
+			for (i = 0; i < array.length; i++)
 				mem[arrayAddress + i] = parseInt(array[i], 10) & 0xff;
 			return i;
 		}
@@ -1031,10 +1088,10 @@ function Cpu() {
 	}
 
 	function step() {
-		//все команды двухбайтные, за некоторыми следуют два байта данных
-		var op1 = mem[pc++]; //первый байт
-		var op2 = mem[pc++]; //второй байт
-		var reg1 = 0; // дополнительные переменные
+		//all commands are double-byte, some are followed by two bytes of data
+		var op1 = mem[pc++]; //first byte
+		var op2 = mem[pc++]; //second byte
+		var reg1 = 0; //additional variables
 		var reg2 = 0;
 		var reg3 = 0;
 		var n = 0;
@@ -1608,12 +1665,12 @@ function Cpu() {
 					reg[reg1] = zero;
 				else if (reg2 == 2)
 					reg[reg1] = negative;
-				else if (reg2 == 3) { //pozitive
+				else if (reg2 == 3) { //positive
 					if (negative == 0 && zero == 0)
 						reg[reg1] = 1;
 					else
 						reg[reg1] = 0;
-				} else if (reg2 == 4) { //not pozitive
+				} else if (reg2 == 4) { //not positive
 					if (negative == 0 && zero == 0)
 						reg[reg1] = 0;
 					else
@@ -1632,9 +1689,9 @@ function Cpu() {
 			switch (op1) {
 			case 0xD0:
 				//CLS		D000
-				if ((op2 & 0xff) == 0)
+				if ((op2 & 0xff) == 0) {
 					display.clearScreen(bgcolor);
-				else {
+				} else {
 					//GSPRXY R,R
 					reg1 = (op2 & 0xf0) >> 4;
 					reg2 = op2 & 0xf;
@@ -1669,6 +1726,7 @@ function Cpu() {
 						s = (reg[reg1] - 0x10000).toString(10);
 					for (var i = 0; i < s.length; i++) {
 						printc(s[i], color, bgcolor);
+						//console.log(s[i]);
 					}
 					break;
 				case 0x30:
@@ -1724,7 +1782,7 @@ function Cpu() {
 				case 0x00:
 					// DRWIM R			D40R
 					reg1 = op2 & 0xf;
-					reg2 = reg[reg1]; //регистр указывает на участок памяти, в котором расположены последовательно h, w, y, x, адрес
+					reg2 = reg[reg1]; //the register indicates a portion of memory in which h, w, y, x are located in series, the address
 					if (imageSize > 1)
 						drawImageS(readInt(reg2 + 8), readInt(reg2 + 6), readInt(reg2 + 4), readInt(reg2 + 2), readInt(reg2));
 					else
@@ -1758,13 +1816,13 @@ function Cpu() {
 				case 0x60:
 					// DLINE			D46R
 					reg1 = op2 & 0xf;
-					reg2 = reg[reg1]; //регистр указывает на участок памяти, в котором расположены последовательно y1, x1, y, x
+					reg2 = reg[reg1]; //the register indicates a portion of memory in which y1, x1, y, x are located sequentially
 					drawLine(readInt(reg2 + 6), readInt(reg2 + 4), readInt(reg2 + 2), readInt(reg2));
 					break;
 				case 0x70:
 					// DRWRLE R		D47R
 					reg1 = op2 & 0xf;
-					reg2 = reg[reg1]; //регистр указывает на участок памяти, в котором расположены последовательно h, w, y, x, адрес
+					reg2 = reg[reg1]; //the register indicates a portion of memory in which h, w, y, x are located in series, the address
 					if (imageSize > 1)
 						drawImageRLES(readInt(reg2 + 8), readInt(reg2 + 6), readInt(reg2 + 4), readInt(reg2 + 2), readInt(reg2));
 					else
@@ -1773,19 +1831,19 @@ function Cpu() {
 				case 0x80:
 					// LDTILE R		D4 8R
 					reg1 = op2 & 0xf;
-					reg2 = reg[reg1]; //регистр указывает на участок памяти, в котором расположены последовательно height, width, iheight, iwidth, adr
+					reg2 = reg[reg1]; //the register indicates the portion of memory in which height, width, iheight, iwidth, adr are sequentially
 					loadTile(readInt(reg2 + 8), readInt(reg2 + 6), readInt(reg2 + 4), readInt(reg2 + 2), readInt(reg2));
 					break;
 				case 0x90:
 					// SPRSDS R*2	D4 9R
 					reg1 = op2 & 0xf;
-					reg2 = reg[reg1]; //регистр указывает на участок памяти, в котором расположены последовательно direction, speed, n
+					reg2 = reg[reg1]; //the register indicates a portion of memory in which direction, speed, n are sequentially
 					spriteSetDirectionAndSpeed(readInt(reg2 + 4), readInt(reg2 + 2), readInt(reg2));
 					break;
 				case 0xA0:
 					// DRW1BIT R	D4AR
 					reg1 = op2 & 0xf;
-					reg2 = reg[reg1]; //регистр указывает на участок памяти, в котором расположены последовательно h, w, y, x, адрес
+					reg2 = reg[reg1]; //the register indicates a portion of memory in which h, w, y, x are located sequentially, the address
 					if (imageSize > 1)
 						drawImage1bitS(readInt(reg2 + 8), readInt(reg2 + 6), readInt(reg2 + 4), readInt(reg2 + 2), readInt(reg2));
 					else
@@ -1795,14 +1853,14 @@ function Cpu() {
 				break;
 			case 0xD5:
 				// LDSPRT R,R		D5RR
-				reg1 = (op2 & 0xf0) >> 4; //номер спрайта
-				reg2 = op2 & 0xf; //адрес спрайта
+				reg1 = (op2 & 0xf0) >> 4; //sprite number
+				reg2 = op2 & 0xf; //sprite address
 				setSprite(reg[reg1] & 0x1f, reg[reg2]);
 				break;
 			case 0xD6:
 				// SPALET R,R		D6 RR
-				reg1 = (op2 & 0xf0) >> 4; //номер цвета
-				reg2 = op2 & 0xf; //новый цвет
+				reg1 = (op2 & 0xf0) >> 4; //colour number
+				reg2 = op2 & 0xf; //new colour
 				display.changePalette(reg[reg1], reg[reg2]);
 				break;
 			case 0xD7:
@@ -1810,22 +1868,22 @@ function Cpu() {
 				reg2 = reg[reg1];
 				if ((op2 & 0xf0) == 0)
 					// SPART R 		D7 0R
-					//регистр указывает на участок памяти, в котором расположены последовательно count, time, gravity
+					//the register indicates the portion of memory in which count, time, gravity are located in series
 					setParticle(readInt(reg2 + 4), readInt(reg2 + 2), readInt(reg2));
 				else if ((op2 & 0xf0) == 0x10)
-					//регистр указывает на участок памяти, в котором расположены последовательно speed, direction2, direction1, time
+					//the register indicates the portion of memory in which speed, direction2, direction1, time are located in series
 					setEmitter(readInt(reg2 + 6), readInt(reg2 + 4), readInt(reg2 + 2), readInt(reg2));
 				else if ((op2 & 0xf0) == 0x20)
-					//регистр указывает на участок памяти, в котором расположены последовательно color, y, x
+					//the register indicates a piece of memory in which color, y, x are located in series
 					drawParticle(readInt(reg2 + 4), readInt(reg2 + 2), readInt(reg2));
 				else if ((op2 & 0xf0) == 0x50)
-					//регистр указывает на участок памяти, в котором расположены последовательно color, y, x
+					//the register indicates a piece of memory in which color, y, x are located in series
 					reg[1] = distancepp(readInt(reg2 + 6), readInt(reg2 + 4), readInt(reg2 + 2), readInt(reg2));
 				break;
 			case 0xD8:
 				// SCROLL R,R		D8RR
-				reg1 = (op2 & 0xf0) >> 4; //шаг, доделать
-				reg2 = op2 & 0xf; //направление
+				reg1 = (op2 & 0xf0) >> 4; //step to finish
+				reg2 = op2 & 0xf; //direction
 				scrollScreen(1, reg[reg2]);
 				if (reg[reg2] == 0 || reg[reg2] == 2)
 					scrollScreen(1, reg[reg2]);
@@ -1891,7 +1949,7 @@ function Cpu() {
 			break;
 		case 0xE0:
 			// DRSPRT R,R,R	ERRR
-			reg1 = (op1 & 0xf); //номер спрайта
+			reg1 = (op1 & 0xf); //sprite number
 			reg2 = (op2 & 0xf0) >> 4; //x
 			reg3 = op2 & 0xf; //y
 			drawSprite(reg[reg1] & 0x1f, reg[reg2], reg[reg3]);
@@ -1900,7 +1958,7 @@ function Cpu() {
 			break;
 		case 0xF0:
 			// SSPRTV R,R,R	FR RR
-			reg1 = (op1 & 0xf); //номер спрайта
+			reg1 = (op1 & 0xf); //sprite number
 			reg2 = (op2 & 0xf0) >> 4; //type
 			reg3 = op2 & 0xf; //value
 			if (reg[reg2] == 0) {
@@ -1914,13 +1972,15 @@ function Cpu() {
 				else
 					sprites[reg[reg1] & 31].y = reg[reg3] << 2;
 			} else if (reg[reg2] == 2) {
-				if (reg[reg3] > 128)
-					sprites[reg[reg1] & 31].speedx =  - (256 - (reg[reg3] & 0xff));
+// SH
+				if (reg[reg3] > (iW - iX))
+					sprites[reg[reg1] & 31].speedx =  - ((iW - iX) * 2 - (reg[reg3] & ((iW - iX) * 2 - 1)));
 				else
 					sprites[reg[reg1] & 31].speedx = reg[reg3];
 			} else if (reg[reg2] == 3) {
-				if (reg[reg3] > 128)
-					sprites[reg[reg1] & 31].speedy =  - (256 - (reg[reg3] & 0xff));
+// SH
+				if (reg[reg3] > iH)
+					sprites[reg[reg1] & 31].speedy =  - (iH * 2 - (reg[reg3] & (iH * 2 - 1)));
 				else
 					sprites[reg[reg1] & 31].speedy = reg[reg3];
 			} else if (reg[reg2] == 4)
@@ -1950,7 +2010,7 @@ function Cpu() {
 			else if (reg[reg2] == 14)
 				sprites[reg[reg1] & 31].isonebit = reg[reg3];
 			else if (reg[reg2] == 15)
-				sprites[reg[reg1] & 31].fliphorisontal = reg[reg3];
+				sprites[reg[reg1] & 31].fliphorizontal = reg[reg3];
 			break;
 		}
 	}
@@ -1997,6 +2057,11 @@ function Cpu() {
 		return s;
 	}
 
+// SH
+	function getsProc() {
+		return sProc;
+	}
+
 	return {
 		init: init,
 		load: load,
@@ -2006,7 +2071,9 @@ function Cpu() {
 		setRedraw: setRedraw,
 		redrawSprite: redrawSprite,
 		redrawParticle: redrawParticle,
-		testSpriteCollision: testSpriteCollision
+		testSpriteCollision: testSpriteCollision,
+// SH
+		getsProc: getsProc
 	};
 }
 

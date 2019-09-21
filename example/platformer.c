@@ -14,59 +14,65 @@ int t[] = {
 	0,b,b,b,0,0,0,b,b,0,0,0,0,b,0,0,0,0,0,0,
 	a,a,a,a,a,a,a,a,a,a,a,a,a,a,0,0,a,a,a,a
 };
-int i,key;
+
+int i, key;
 char cadr = 0;
 
-void scrollscreen(){
-	if(spritegetvalue(1,S_X) > 80){
-		scroll(1,2);}
-	else if(spritegetvalue(1,S_X) < 40){
-		scroll(1,0);}
+void scrollscreen() {
+	if (spritegetvalue(1, S_X) > 80) {
+		scroll(1, 2);
+    } else if (spritegetvalue(1, S_X) < 40) {
+		scroll(1, 0);
+    }
 }
 
-void init(){
-	for(i = 0; i < 16; i++){
+void init() {
+	for (i = 0; i < 16; i++) {
 		putimagerle(cloud2, i * 16, 0, 16, 16);
 		putimagerle(cloud1, i * 16, 16, 16, 13);
 	}
+
 	putimagerle(cloud3, 64, 0, 16, 16);
 	putimagerle(cloud3, 2, 0, 16, 16);
 	loadtile(t, 16, 16, 20, 3);
-	getsprite(1,spr0);
+	getsprite(1, spr0);
 	putsprite(1, 20, 30);
-	spritesetvalue(1,S_WIDTH,10);
-	spritesetvalue(1,S_HEIGHT,16);
-	spritesetvalue(1,S_GRAVITY,1);
-	spritesetvalue(1,S_SOLID,1);
-	drawtile(10 ,70);
+	spritesetvalue(1, S_WIDTH, 10);
+	spritesetvalue(1, S_HEIGHT, 16);
+	spritesetvalue(1, S_GRAVITY, 1);
+	spritesetvalue(1, S_SOLID, 1);
+	drawtile(10, 70);
 }
 
-void main(){
+void main() {
 	init();
-	while(1){
-		getsprite(1,spr[cadr]);
+
+	while (1) {
+		getsprite(1, spr[cadr]);
 		key = getkey();
-		if(key & KEY_LEFT){
-			spritesetvalue(1,S_SPEEDX,-2);
+
+		if (key & KEY_LEFT) {
+			spritesetvalue(1, S_SPEEDX, -2);
 			cadr = 1 - cadr;
-		}
-		else if(key & KEY_RIGHT){
-			spritesetvalue(1,S_SPEEDX,2);
+		} else if (key & KEY_RIGHT) {
+			spritesetvalue(1, S_SPEEDX, 2);
 			cadr = 1 - cadr;
+		} else {
+			spritesetvalue(1, S_SPEEDX, 0);
 		}
-		else{
-			spritesetvalue(1,S_SPEEDX,0);
-		}
-		if(((key & KEY_B) > 0) && (spritegetvalue(1,1) > 50)){  
-			if(spritegetvalue(1,S_SPEEDY) == 0){
-				spritesetvalue(1,S_SPEEDY,-10);
+
+		if (((key & KEY_B) > 0) && (spritegetvalue(1,1) > 50)) {  
+			if (spritegetvalue(1, S_SPEEDY) == 0) {
+				spritesetvalue(1, S_SPEEDY, -10);
 			}
 		}
-		if(spritegetvalue(1,S_Y) > 128){
+
+		if (spritegetvalue(1, S_Y) > 128) {
 			clearscreen();
 			init();
 		}
+
 		scrollscreen();
 		delayredraw();
 	} 
-}  
+}
